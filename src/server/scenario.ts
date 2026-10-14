@@ -1,4 +1,4 @@
-export const SCENARIO_HEADER = "x-mock-scenario";
+import { parseMovementsScenario, SCENARIO_HEADER, type MovementsScenario } from "@/domain/api";
 
 export const SCENARIOS = [
   "success",
@@ -41,12 +41,8 @@ export function resolveScenario(
   return "success";
 }
 
-// GET /api/movements uses its own scenarios: an empty list or a server error.
-export type MovementsScenario = "empty" | "error";
-
 export function resolveMovementsScenario(
   request: Pick<Request, "headers">,
 ): MovementsScenario | null {
-  const value = request.headers.get(SCENARIO_HEADER)?.trim();
-  return value === "empty" || value === "error" ? value : null;
+  return parseMovementsScenario(request.headers.get(SCENARIO_HEADER));
 }
