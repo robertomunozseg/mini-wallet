@@ -1,14 +1,13 @@
-import { parseListScenario, SCENARIO_HEADER, type ListScenario } from "@/domain/api";
+import {
+  parseListScenario,
+  SCENARIO_HEADER,
+  SCENARIOS,
+  type ListScenario,
+  type Scenario,
+} from "@/domain/api";
 
-export const SCENARIOS = [
-  "success",
-  "network_error",
-  "insufficient_funds",
-  "timeout",
-  "unknown_error",
-] as const;
-
-export type Scenario = (typeof SCENARIOS)[number];
+export { SCENARIOS };
+export type { Scenario };
 
 // Relative weights: success 60%, every other scenario 10%.
 const WEIGHTS: Record<Scenario, number> = {

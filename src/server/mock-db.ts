@@ -14,6 +14,7 @@ type Db = {
   movements: Movement[];
   contacts: Contact[];
   outcomesByKey: Map<string, StoredEntry>;
+  receiptsById: Map<string, Receipt>;
 };
 
 function createInitialDb(): Db {
@@ -47,6 +48,7 @@ function createInitialDb(): Db {
       },
     ],
     outcomesByKey: new Map(),
+    receiptsById: new Map(),
   };
 }
 
@@ -142,4 +144,27 @@ export function saveOutcome(
 
 export function outcomeCount(): number {
   return db().outcomesByKey.size;
+}
+
+// Receipts are kept by transaction id so the receipt page can be opened (and reloaded) later.
+// Capped like the idempotency store: the oldest receipts are dropped first.
+export const MAX_STORED_RECEIPTS = 10_000;
+
+export function saveReceipt(receipt: Receipt): void {
+  const receipts = db().receiptsById;
+  receipts.set(receipt.transaction.id, receipt);
+
+  while (receipts.size > MAX_STORED_RECEIPTS) {
+    const oldest = receipts.keys().next();
+    if (oldest.done) break;
+    receipts.delete(oldest.value);
+  }
+}
+
+export function getReceiptById(transactionId: string): Receipt | undefined {
+  return db().receiptsById.get(transactionId);
+}
+
+export function receiptCount(): number {
+  return db().receiptsById.size;
 }

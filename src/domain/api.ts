@@ -14,6 +14,17 @@ export type TransactionResponse = { receipt: Receipt };
 // Header that forces a mock scenario (used by tests and demos).
 export const SCENARIO_HEADER = "x-mock-scenario";
 
+// Scenarios of POST /transactions. Shared so the demo selector of the UI can list them.
+export const SCENARIOS = [
+  "success",
+  "network_error",
+  "insufficient_funds",
+  "timeout",
+  "unknown_error",
+] as const;
+
+export type Scenario = (typeof SCENARIOS)[number];
+
 // Scenarios of the list endpoints (GET /movements and GET /contacts):
 // - empty: an empty list. error: a server error.
 // - large: a big generated dataset (10,000 movements, 5,000 contacts) to try pagination and

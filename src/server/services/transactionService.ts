@@ -1,11 +1,11 @@
+import type { Scenario } from "@/domain/api";
 import type { ApiError, TransferValidationError } from "@/domain/errors";
 import { err, ok, type Result } from "@/domain/result";
 import type { TransferRequest } from "@/domain/schemas";
 import type { Receipt, Transaction } from "@/domain/types";
 import { TRANSFER_ERROR_MESSAGES, validateTransfer } from "@/domain/transfer-rules";
 import { apiError } from "../api-error";
-import { addMovement, getBalance, getOutcome, saveOutcome } from "../mock-db";
-import type { Scenario } from "../scenario";
+import { addMovement, getBalance, getOutcome, saveOutcome, saveReceipt } from "../mock-db";
 import { sleep } from "../sleep";
 import { debit } from "./accountService";
 
@@ -94,7 +94,9 @@ export function createTransactionService(overrides: Partial<Deps> = {}) {
       status: "completed",
     });
 
-    const outcome = ok({ transaction, newBalanceCents: debited.value });
+    const receipt: Receipt = { transaction, newBalanceCents: debited.value };
+    saveReceipt(receipt);
+    const outcome = ok(receipt);
     saveOutcome(idempotencyKey, outcome, deps.now().getTime());
     return outcome;
   }

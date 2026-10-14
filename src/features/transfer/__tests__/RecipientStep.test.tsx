@@ -409,6 +409,35 @@ describe("RecipientStep", () => {
       await userEvent.type(screen.getByLabelText("Email or phone"), phoneOrEmail);
     }
 
+    it("the + button sits next to the search box, away from Continue", () => {
+      renderStep();
+
+      const plus = screen.getByRole("button", { name: "New contact" });
+      expect(plus).toHaveTextContent("+");
+      expect(plus).toHaveAttribute("aria-expanded", "false");
+      expect(plus.parentElement).toContainElement(screen.getByLabelText("Search contacts"));
+      expect(plus.parentElement).not.toContainElement(
+        screen.getByRole("button", { name: "Continue" }),
+      );
+    });
+
+    it("the + button toggles the form and shows it above the contact list", async () => {
+      renderStep();
+      await openForm();
+
+      const plus = screen.getByRole("button", { name: "New contact" });
+      expect(plus).toHaveAttribute("aria-expanded", "true");
+      const form = screen.getByRole("heading", { name: "New contact" });
+      const firstContact = screen.getAllByRole("radio")[0] as HTMLElement;
+      expect(
+        form.compareDocumentPosition(firstContact) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+
+      await userEvent.click(plus);
+      expect(screen.queryByRole("heading", { name: "New contact" })).not.toBeInTheDocument();
+      expect(plus).toHaveAttribute("aria-expanded", "false");
+    });
+
     it("opens and closes the form", async () => {
       renderStep();
       await openForm();

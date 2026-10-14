@@ -125,6 +125,23 @@ si me gustaría dejarlo preparado de una vez para millones de usuarios , usar te
 ok si lo más real que se pueda presentar aunque sea mock pero me servira para el challenge , performance, virtualizacion, hooks usecallback, usememo memo, debounce
 ```
 
+#### Fase 7 — Confirmación de la transferencia
+
+```text
+Fase 7 (confirmación). Primero plan.
+1. features/transfer/hooks/useConfirmTransfer.ts: useAxios manual POST /transactions con header Idempotency-Key = transferSlice.idempotencyKey. Expone confirm(), retry(), state. Evita doble submit.
+2. ConfirmationResult con UI por escenario, usando mapApiError:
+   - success → router.push(`/transfer/receipt/${id}`)
+   - NETWORK_ERROR → mensaje + "Reintentar" (MISMA idempotency key)
+   - INSUFFICIENT_FUNDS → error descriptivo + "Cambiar monto" (vuelve a AmountStep)
+   - TIMEOUT → "La operación tardó demasiado; puede que se haya procesado" + "Reintentar" (misma key, el servidor no duplica) + "Volver al inicio"
+   - UNKNOWN_ERROR → fallback genérico + volver al inicio
+   Mientras confirma: spinner y texto "Procesando…". Si tarda más de 3s, mensaje "Esto está tardando más de lo normal".
+3. app/(wallet)/transfer/receipt/[id]/page.tsx (Server Component): obtiene la transacción del service; muestra folio, fecha, monto, destinatario, nuevo saldo; botones "Volver al inicio" y "Nueva transferencia"; notFound() si no existe o no pertenece al usuario.
+4. Modo demo opcional: si NEXT_PUBLIC_DEMO_MODE === 'true', muestra en SummaryStep un select "Escenario simulado" (aleatorio por defecto) que envía x-mock-scenario. Útil para que los evaluadores vean todos los casos.
+5. Tests: useConfirmTransfer en los 5 escenarios (axios mockeado) y que retry reutiliza la misma idempotency key.
+```
+
 ## Qué se revisó y corrigió manualmente
 
 ### Cambios que pedí respecto a lo propuesto o a mis prompts
@@ -147,5 +164,8 @@ Cada punto indica qué pedí cambiar y por qué. Cuando la razón la propuso Cla
 | Extra | Uso explícito de `memo`, `useCallback` y `useMemo` donde tienen efecto medible, y carga diferida de `NewContactForm`. | Lo pedí para poder mostrarlo en el challenge. Claude los aplicó solo donde evitan re-renders (filas de lista, opciones de contacto) y lo comprobó con tests que cuentan renders. |
 | Extra | Dataset grande bajo demanda con `x-mock-scenario: large` (10 000 movimientos y 5 000 contactos), en vez de un script aparte. | Pregunté cuál recomendaba. Razón de Claude, aceptada: reutiliza un mecanismo ya probado, funciona también en el deploy de Vercel y es determinista. Solo afecta a las lecturas. |
 | Extra | Memoria de idempotencia acotada (TTL de 24 h y máximo de 10 000 claves) y `Cache-Control: private, no-store` en la API. | Parte del mismo paquete de preparación para alto volumen aprobado en "una sola rama". |
+| 7 | Quitar las acciones `confirmSucceeded` y `confirmFailed` (y `lastResult` y el paso `result`) del `transferSlice`. | Claude lo recomendó y lo acepté: el estado de la petición (procesando, error, éxito) vive en `useConfirmTransfer`, así que esas acciones quedaban sin uso y habría código muerto. |
+| 7 (ajuste posterior) | En el paso de destinatario: botón **`+` junto al buscador** para crear un contacto (antes un botón "New contact" de ancho completo debajo de la lista), el formulario se abre justo bajo el buscador, y **"Continue" queda en una barra fija** al fondo. | Con una pantalla grande tenía que hacer scroll para llegar al botón azul y "New contact" se confundía con "Continue" (dos botones de ancho completo, juntos). Pedí ideas antes de cambiar nada; Claude propuso las opciones A–H y elegí la E (botón `+`) y acepté su recomendación de añadir la A (barra fija). |
+| 7 (segundo ajuste) | El **scroll pasa a la lista de contactos** (que incluye el formulario de nuevo contacto) y la página ya no se desplaza; además un **hover más visible** (borde y fondo azul claro) en los botones secundarios, empezando por el `+`. | Seguía teniendo mucho espacio en pantalla y no me gustaba el scroll de toda la página; le pedí a Claude poner el scroll en el listado u otra mejor idea. El hover gris del botón `+` casi no se notaba. |
 
 ## Reflexiones

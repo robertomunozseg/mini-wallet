@@ -4,12 +4,16 @@ import { err, ok } from "@/domain/result";
 import type { Receipt } from "@/domain/types";
 import {
   getOutcome,
+  getReceiptById,
   listMovements,
   MAX_STORED_OUTCOMES,
+  MAX_STORED_RECEIPTS,
   OUTCOME_TTL_MS,
   outcomeCount,
+  receiptCount,
   resetDb,
   saveOutcome,
+  saveReceipt,
 } from "../mock-db";
 
 const receipt: Receipt = {
@@ -105,5 +109,30 @@ describe("listMovements", () => {
     expect(movements).toHaveLength(8);
     const dates = movements.map((movement) => movement.createdAt);
     expect(dates).toEqual([...dates].sort().reverse());
+  });
+});
+
+describe("receipts", () => {
+  function receiptWithId(id: string): Receipt {
+    return { ...receipt, transaction: { ...receipt.transaction, id } };
+  }
+
+  it("returns a stored receipt by transaction id", () => {
+    saveReceipt(receipt);
+    expect(getReceiptById("tx-1")).toEqual(receipt);
+  });
+
+  it("returns undefined for an unknown id", () => {
+    expect(getReceiptById("nope")).toBeUndefined();
+  });
+
+  it("never holds more than the maximum and drops the oldest first", () => {
+    for (let index = 0; index < MAX_STORED_RECEIPTS + 3; index += 1) {
+      saveReceipt(receiptWithId(`tx-${index}`));
+    }
+    expect(receiptCount()).toBe(MAX_STORED_RECEIPTS);
+    expect(getReceiptById("tx-0")).toBeUndefined();
+    expect(getReceiptById("tx-2")).toBeUndefined();
+    expect(getReceiptById("tx-3")).toBeDefined();
   });
 });
