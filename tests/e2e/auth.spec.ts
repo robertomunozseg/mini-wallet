@@ -1,9 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
-
-// Next.js adds its own role="alert" route announcer, so alerts are matched by their text.
-function alertWithText(page: Page, text: string) {
-  return page.getByRole("alert").filter({ hasText: text });
-}
+import { expect, test } from "@playwright/test";
+import { alertWithText } from "./helpers";
 
 test.describe("auth flow", () => {
   test("redirects an anonymous user from /home to /login", async ({ page }) => {

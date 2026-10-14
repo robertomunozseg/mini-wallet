@@ -15,5 +15,8 @@ export default defineConfig({
     command: "npm run dev",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
+    // Only applies when Playwright starts the server itself (not when it reuses a running one):
+    // the "timeout" scenario waits 300 ms instead of 10 s.
+    env: { MOCK_TIMEOUT_DELAY_MS: "300" },
   },
 });

@@ -142,6 +142,24 @@ Fase 7 (confirmación). Primero plan.
 5. Tests: useConfirmTransfer en los 5 escenarios (axios mockeado) y que retry reutiliza la misma idempotency key.
 ```
 
+#### Fase 8 — E2E con Playwright
+
+```text
+Fase 8 (E2E con Playwright). Primero plan.
+Escenarios en tests/e2e:
+1. auth.spec.ts: login válido → home; identifier inválido muestra validación; fail@test.com muestra error; /home sin sesión redirige a /login.
+2. home.spec.ts: muestra nombre y saldo; estado vacío y error de movimientos (forzados).
+3. transfer.spec.ts: flujo completo exitoso hasta el comprobante; monto mayor al saldo bloqueado; sin destinatario no confirma; alta de contacto nuevo.
+4. confirmation-scenarios.spec.ts: un test por escenario forzando x-mock-scenario con page.route('**/api/transactions', route => route.continue({ headers: { ...route.request().headers(), 'x-mock-scenario': '...' } })). Para timeout, reduce el tiempo con una variable de entorno de test en vez de esperar 10s.
+Usa selectores accesibles (getByRole, getByLabel), no clases CSS. Crea un fixture de login reutilizable.
+```
+
+Decisiones que respondí al plan de Claude (A–D):
+
+```text
+A. refactorizar, B. vamos dejar lo que tenemos actualmente, mediante mas pruebas revisamos si cambiamos a servidor propio, C. por Api, D. dejalo así
+```
+
 ## Qué se revisó y corrigió manualmente
 
 ### Cambios que pedí respecto a lo propuesto o a mis prompts
@@ -167,5 +185,6 @@ Cada punto indica qué pedí cambiar y por qué. Cuando la razón la propuso Cla
 | 7 | Quitar las acciones `confirmSucceeded` y `confirmFailed` (y `lastResult` y el paso `result`) del `transferSlice`. | Claude lo recomendó y lo acepté: el estado de la petición (procesando, error, éxito) vive en `useConfirmTransfer`, así que esas acciones quedaban sin uso y habría código muerto. |
 | 7 (ajuste posterior) | En el paso de destinatario: botón **`+` junto al buscador** para crear un contacto (antes un botón "New contact" de ancho completo debajo de la lista), el formulario se abre justo bajo el buscador, y **"Continue" queda en una barra fija** al fondo. | Con una pantalla grande tenía que hacer scroll para llegar al botón azul y "New contact" se confundía con "Continue" (dos botones de ancho completo, juntos). Pedí ideas antes de cambiar nada; Claude propuso las opciones A–H y elegí la E (botón `+`) y acepté su recomendación de añadir la A (barra fija). |
 | 7 (segundo ajuste) | El **scroll pasa a la lista de contactos** (que incluye el formulario de nuevo contacto) y la página ya no se desplaza; además un **hover más visible** (borde y fondo azul claro) en los botones secundarios, empezando por el `+`. | Seguía teniendo mucho espacio en pantalla y no me gustaba el scroll de toda la página; le pedí a Claude poner el scroll en el listado u otra mejor idea. El hover gris del botón `+` casi no se notaba. |
+| 8 | Refactorizar los e2e existentes (no reescribirlos), **mantener el servidor actual** para los e2e (reutilizar el de `npm run dev`) en vez de uno propio, login del fixture **por API** y **solo Chromium**. | Claude propuso reescribir o refactorizar, un servidor aparte (otro `distDir` y puerto), login por API o UI, y varios navegadores. Elegí refactorizar porque ya estaba probado; dejar el servidor como estaba y decidir después, con más pruebas, si conviene uno propio; la API por velocidad; y Chromium por simplicidad. |
 
 ## Reflexiones
