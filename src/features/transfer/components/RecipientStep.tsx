@@ -158,41 +158,53 @@ export function RecipientStep({ balanceCents, scenario }: RecipientStepProps) {
     <div className="flex flex-col gap-4">
       <h2 className="text-xl font-semibold text-zinc-900">Who is receiving it?</h2>
 
-      <Input
-        label="Search contacts"
-        type="search"
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        autoComplete="off"
-      />
+      <div className="flex items-end gap-2">
+        <div className="flex-1">
+          <Input
+            label="Search contacts"
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            autoComplete="off"
+          />
+        </div>
+        {/* Far from "Continue" on purpose, so the two buttons are never mixed up. */}
+        <Button
+          variant="secondary"
+          aria-label="New contact"
+          title="New contact"
+          aria-expanded={showForm}
+          onClick={() => setShowForm((open) => !open)}
+          className="w-11 px-0 text-xl"
+        >
+          <span aria-hidden="true">+</span>
+        </Button>
+      </div>
       <p aria-live="polite" className="-mt-2 min-h-5 text-sm text-zinc-600">
         {isSearching ? "Searching…" : ""}
       </p>
 
+      {showForm && <NewContactForm onCreated={handleCreated} onCancel={handleCancelForm} />}
+
       {renderContacts()}
 
-      {showForm ? (
-        <NewContactForm onCreated={handleCreated} onCancel={handleCancelForm} />
-      ) : (
-        <Button variant="secondary" onClick={() => setShowForm(true)}>
-          New contact
-        </Button>
-      )}
-
-      <p aria-live="polite" className="text-sm text-zinc-600">
-        {recipient.trim() !== "" && (
-          <>
-            Sending to: <span className="font-semibold text-zinc-900">{recipient}</span>
-          </>
-        )}
-      </p>
-      {attempted && recipientMissing && (
-        <p role="alert" className="text-sm text-red-700">
-          {TRANSFER_ERROR_MESSAGES.RECIPIENT_REQUIRED}
+      {/* Sticky: Continue stays visible however long the contact list is. */}
+      <div className="sticky bottom-0 -mx-4 flex flex-col gap-2 border-t border-zinc-200 bg-white px-4 py-3">
+        <p aria-live="polite" className="text-sm text-zinc-600">
+          {recipient.trim() !== "" && (
+            <>
+              Sending to: <span className="font-semibold text-zinc-900">{recipient}</span>
+            </>
+          )}
         </p>
-      )}
+        {attempted && recipientMissing && (
+          <p role="alert" className="text-sm text-red-700">
+            {TRANSFER_ERROR_MESSAGES.RECIPIENT_REQUIRED}
+          </p>
+        )}
 
-      <Button onClick={handleContinue}>Continue</Button>
+        <Button onClick={handleContinue}>Continue</Button>
+      </div>
     </div>
   );
 }
