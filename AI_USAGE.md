@@ -97,4 +97,15 @@ Para probar vacío/error en dev permite ?scenario=empty|error en la URL de la p�
 
 ## Qué se revisó y corrigió manualmente
 
+### Cambios que pedí respecto a lo propuesto o a mis prompts
+
+Cada punto indica qué pedí cambiar y por qué. Cuando la razón la propuso Claude y yo la acepté, se indica.
+
+| Fase | Qué pedí cambiar | Por qué |
+|---|---|---|
+| 3 | Mensajes de error de `mapApiError` en **inglés** (mi prompt los pedía en español). | Toda la UI (botones, textos y mensajes) va en inglés, según el CLAUDE.md del proyecto. Con mensajes en español la UI quedaría mezclada. |
+| 4 | `login/page.tsx` como **Server Component** que renderiza `LoginForm` (mi prompt decía Client Component). | Razón propuesta por Claude y aceptada: el comportamiento es el mismo y así la página puede exportar `metadata` (título "Sign in"). `LoginForm` sigue siendo Client Component. |
+| 5 | `?scenario=empty\|error` habilitado en **todos los entornos**, no solo en dev (mi prompt decía "en dev"). | Pregunté cómo dejarlo para Vercel. Razón propuesta por Claude y aceptada: el header `x-mock-scenario` ya funciona contra la API en cualquier entorno y solo acepta `empty` y `error`, así quien revise el deploy puede ver esos estados. |
+| 5 (ajuste posterior) | Home en **dos columnas desde 768 px** (`md`) en vez de 1024 px (`lg`). | Pregunté si la app funcionaba en tablets. Claude observó que en tablets en vertical la tarjeta de saldo se estiraba a todo el ancho con mucho espacio vacío, y pedí ajustarlo. Verificado a 768, 820 y 1024 px: sin scroll horizontal y con un saldo muy grande (`$99,999,999.99`) cabe en la columna más angosta. |
+
 ## Reflexiones
