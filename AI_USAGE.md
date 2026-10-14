@@ -56,6 +56,31 @@ Fase 2 (servidor). Primero plan.
 Documenta en comentarios breves por qué los delays existen.
 ```
 
+#### Fase 3 — Store, http y UI base
+
+```text
+Fase 3. Primero plan.
+1. Redux Toolkit para App Router: store.ts con makeStore() (un store por request, no singleton global), StoreProvider.tsx ('use client' con useRef), hooks.ts tipados (useAppDispatch, useAppSelector), RootState y AppDispatch.
+2. sessionSlice: user | null, hydrate(user), clear(). transferSlice: step ('amount'|'recipient'|'summary'|'confirming'|'result'), amountCents, recipient, idempotencyKey, lastResult; acciones setAmount, setRecipient, goToStep, startConfirm (genera idempotencyKey con crypto.randomUUID si no existe), confirmSucceeded, confirmFailed, reset. Selectores memoizados (createSelector), incluido selectTransferValidation que use validateTransfer del dominio.
+3. lib/http.ts: instancia axios (baseURL '/api', timeout 8000, withCredentials) y configure() de axios-hooks con defaultOptions { useCache: false } para no mostrar saldos o movimientos viejos.
+4. lib/map-api-error.ts: convierte cualquier error (AxiosError con ECONNABORTED → TIMEOUT, sin response → NETWORK_ERROR, body con error.code → ese código, otro → UNKNOWN_ERROR) a { code: ApiErrorCode, message: string } con mensajes en español para el usuario.
+5. components/ui: Button (variants, loading), Input (label, error, aria-invalid, aria-describedby), Card, Spinner, Skeleton, EmptyState, ErrorState (con onRetry). Accesibles y responsivos con Tailwind.
+6. Tests: reducers y selectores de ambos slices, mapApiError con todos los casos, Button y ErrorState.
+```
+
+#### Fase 4 — Login
+
+```text
+Fase 4 (Login). Primero plan.
+1. app/login/page.tsx (Client Component) con LoginForm en features/auth/components.
+2. Un solo campo "Email o teléfono" que detecta el tipo; validación con loginSchema al hacer blur y al enviar; botón deshabilitado mientras carga.
+3. features/auth/hooks/useLogin.ts: useAxios({ url: '/auth/login', method: 'POST' }, { manual: true }); expone { login, isLoading, error }; en éxito dispatch(hydrate(user)) y router.replace('/home').
+4. Errores: credenciales inválidas (usar fail@test.com) y error de red, con mensaje claro y accesible (role="alert").
+5. middleware (o proxy.ts si el proyecto usa Next 16+): sin cookie → redirect a /login para /home y /transfer/*; con cookie en /login → redirect a /home.
+6. Logout en el header del layout (wallet): POST /auth/logout, dispatch(clear()), redirect.
+7. Tests: LoginForm (validación, loading, error) y useLogin con axios mockeado.
+```
+
 ## Qué se revisó y corrigió manualmente
 
 ## Reflexiones
