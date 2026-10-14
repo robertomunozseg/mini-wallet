@@ -81,6 +81,20 @@ Fase 4 (Login). Primero plan.
 7. Tests: LoginForm (validación, loading, error) y useLogin con axios mockeado.
 ```
 
+#### Fase 5 — Home
+
+```text
+Fase 5 (Home). Primero plan.
+1. app/(wallet)/home/page.tsx como Server Component: lee la sesión y obtiene usuario + saldo llamando accountService directamente (no fetch a /api). Pasa el usuario a un componente cliente que hidrata sessionSlice.
+2. BalanceCard (nombre + saldo con formatMoney) y botón "Nueva transferencia" → /transfer.
+3. MovementsList (Client Component) con features/home/hooks/useMovements.ts (useAxios GET /movements). Estados: cargando (Skeleton), vacío (EmptyState), error (ErrorState con reintentar = refetch), lista.
+   MovementItem con icono de entrada/salida, monto con signo y color, fecha relativa.
+4. home/loading.tsx (skeleton del saldo) y home/error.tsx (error boundary con reset).
+5. Diseño responsivo mobile-first: una columna en móvil, dos en desktop (saldo | movimientos).
+6. Tests: MovementsList en sus 4 estados y BalanceCard.
+Para probar vacío/error en dev permite ?scenario=empty|error en la URL de la página, reenviado como header x-mock-scenario.
+```
+
 ## Qué se revisó y corrigió manualmente
 
 ## Reflexiones
