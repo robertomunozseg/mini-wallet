@@ -14,12 +14,17 @@ const STATUS_BY_CODE: Record<ApiErrorCode, number> = {
   TIMEOUT: 504,
 };
 
+// The API returns data of one user, so no shared cache (CDN, proxy) may store it. "private" also
+// lets the browser keep it, but "no-store" tells it to always ask again: balances and lists
+// must never be shown stale.
+const NO_STORE = { "Cache-Control": "private, no-store" };
+
 export function jsonOk<T>(body: T, status = 200): NextResponse<T> {
-  return NextResponse.json(body, { status });
+  return NextResponse.json(body, { status, headers: NO_STORE });
 }
 
 export function jsonError(error: ApiError): NextResponse<ApiErrorBody> {
-  return NextResponse.json({ error }, { status: STATUS_BY_CODE[error.code] });
+  return NextResponse.json({ error }, { status: STATUS_BY_CODE[error.code], headers: NO_STORE });
 }
 
 export function unauthorizedResponse(): NextResponse<ApiErrorBody> {

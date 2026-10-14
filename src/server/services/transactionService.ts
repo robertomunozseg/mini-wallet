@@ -41,7 +41,7 @@ export function createTransactionService(overrides: Partial<Deps> = {}) {
     idempotencyKey: string,
     scenario: Scenario,
   ): Promise<Result<Receipt, ApiError>> {
-    const stored = getOutcome(idempotencyKey);
+    const stored = getOutcome(idempotencyKey, deps.now().getTime());
     if (stored) return stored;
 
     // Source of truth: the client runs the same rule, but the server never trusts it.
@@ -57,7 +57,7 @@ export function createTransactionService(overrides: Partial<Deps> = {}) {
         return completeTransfer(validation.value, idempotencyKey);
       case "insufficient_funds": {
         const outcome = err(apiError("INSUFFICIENT_FUNDS", "Insufficient balance."));
-        saveOutcome(idempotencyKey, outcome);
+        saveOutcome(idempotencyKey, outcome, deps.now().getTime());
         return outcome;
       }
       case "network_error":
@@ -95,7 +95,7 @@ export function createTransactionService(overrides: Partial<Deps> = {}) {
     });
 
     const outcome = ok({ transaction, newBalanceCents: debited.value });
-    saveOutcome(idempotencyKey, outcome);
+    saveOutcome(idempotencyKey, outcome, deps.now().getTime());
     return outcome;
   }
 

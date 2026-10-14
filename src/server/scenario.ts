@@ -1,4 +1,4 @@
-import { parseMovementsScenario, SCENARIO_HEADER, type MovementsScenario } from "@/domain/api";
+import { parseListScenario, SCENARIO_HEADER, type ListScenario } from "@/domain/api";
 
 export const SCENARIOS = [
   "success",
@@ -41,8 +41,6 @@ export function resolveScenario(
   return "success";
 }
 
-export function resolveMovementsScenario(
-  request: Pick<Request, "headers">,
-): MovementsScenario | null {
-  return parseMovementsScenario(request.headers.get(SCENARIO_HEADER));
+export function resolveListScenario(request: Pick<Request, "headers">): ListScenario | null {
+  return parseListScenario(request.headers.get(SCENARIO_HEADER));
 }

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { loginSchema, newContactSchema, transferRequestSchema } from "../schemas";
+import {
+  contactsQuerySchema,
+  loginSchema,
+  movementsQuerySchema,
+  newContactSchema,
+  transferRequestSchema,
+} from "../schemas";
 
 describe("loginSchema", () => {
   it.each(["ana@example.com", "5512345678", "  ana@example.com  "])("accepts %j", (identifier) => {
@@ -71,5 +77,52 @@ describe("transferRequestSchema", () => {
     expect(transferRequestSchema.safeParse({ amountCents: 1500, recipient: "  " }).success).toBe(
       false,
     );
+  });
+});
+
+describe("movementsQuerySchema", () => {
+  it("uses the default page size when limit is missing", () => {
+    expect(movementsQuerySchema.parse({})).toEqual({ limit: 20 });
+  });
+
+  it("coerces limit from text, as it arrives in a query string", () => {
+    expect(movementsQuerySchema.parse({ limit: "35" }).limit).toBe(35);
+  });
+
+  it.each(["0", "-1", "51", "1.5", "abc", ""])("rejects limit %j", (limit) => {
+    expect(movementsQuerySchema.safeParse({ limit }).success).toBe(false);
+  });
+
+  it.each(["1", "50"])("accepts the limits %j", (limit) => {
+    expect(movementsQuerySchema.safeParse({ limit }).success).toBe(true);
+  });
+
+  it("keeps the cursor and rejects an oversized one", () => {
+    expect(movementsQuerySchema.parse({ cursor: "abc" }).cursor).toBe("abc");
+    expect(movementsQuerySchema.safeParse({ cursor: "a".repeat(301) }).success).toBe(false);
+  });
+});
+
+describe("contactsQuerySchema", () => {
+  it("accepts no parameters", () => {
+    expect(contactsQuerySchema.parse({})).toEqual({ limit: 20 });
+  });
+
+  it("trims the search text", () => {
+    expect(contactsQuerySchema.parse({ q: "  ana  " }).q).toBe("ana");
+  });
+
+  it("accepts an empty search", () => {
+    expect(contactsQuerySchema.parse({ q: "" }).q).toBe("");
+  });
+
+  it("rejects a search longer than 50 characters", () => {
+    expect(contactsQuerySchema.safeParse({ q: "a".repeat(51) }).success).toBe(false);
+    expect(contactsQuerySchema.safeParse({ q: "a".repeat(50) }).success).toBe(true);
+  });
+
+  it("validates limit like the movements query", () => {
+    expect(contactsQuerySchema.safeParse({ limit: "100" }).success).toBe(false);
+    expect(contactsQuerySchema.parse({ q: "ana", limit: "5" })).toEqual({ q: "ana", limit: 5 });
   });
 });

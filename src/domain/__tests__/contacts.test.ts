@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { filterContacts, groupContacts } from "../contacts";
+import {
+  contactKey,
+  filterContacts,
+  groupContacts,
+  isContactAfter,
+  isContactKey,
+  sortContacts,
+} from "../contacts";
 import type { Contact } from "../types";
 
 const contacts: Contact[] = [
@@ -10,7 +17,7 @@ const contacts: Contact[] = [
   { id: "5", name: "Beto Díaz", phoneOrEmail: "5511112222", isFavorite: false },
 ];
 
-function names(list: Contact[]): string[] {
+function names(list: readonly Contact[]): string[] {
   return list.map((contact) => contact.name);
 }
 
@@ -50,17 +57,96 @@ describe("filterContacts", () => {
   });
 });
 
-describe("groupContacts", () => {
+describe("sortContacts", () => {
   it("puts favorites first, each group sorted by name", () => {
-    const { favorites, others } = groupContacts(contacts);
-    expect(names(favorites)).toEqual(["Ana García", "Luis Hernández", "María López"]);
-    expect(names(others)).toEqual(["Beto Díaz", "Carlos Ruiz"]);
+    expect(names(sortContacts(contacts))).toEqual([
+      "Ana García",
+      "Luis Hernández",
+      "María López",
+      "Beto Díaz",
+      "Carlos Ruiz",
+    ]);
   });
 
-  it("applies the search query to both groups", () => {
-    const { favorites, others } = groupContacts(contacts, "r");
+  it("sorts ignoring accents and case", () => {
+    const sorted = sortContacts([
+      { id: "1", name: "Óscar", phoneOrEmail: "5511110001", isFavorite: false },
+      { id: "2", name: "oliver", phoneOrEmail: "5511110002", isFavorite: false },
+      { id: "3", name: "Álvaro", phoneOrEmail: "5511110003", isFavorite: false },
+    ]);
+    expect(names(sorted)).toEqual(["Álvaro", "oliver", "Óscar"]);
+  });
+
+  it("breaks ties between equal names by id, so the order is total", () => {
+    const sorted = sortContacts([
+      { id: "b", name: "Sam", phoneOrEmail: "5511110001", isFavorite: false },
+      { id: "a", name: "Sam", phoneOrEmail: "5511110002", isFavorite: false },
+    ]);
+    expect(sorted.map((contact) => contact.id)).toEqual(["a", "b"]);
+  });
+
+  it("does not change the original array", () => {
+    const original = [...contacts];
+    sortContacts(contacts);
+    expect(contacts).toEqual(original);
+  });
+});
+
+describe("isContactAfter", () => {
+  const ana = contacts[2];
+  if (!ana) throw new Error("fixture missing");
+  const key = contactKey(ana);
+
+  it("is true for contacts that sort later", () => {
+    expect(isContactAfter({ ...ana, id: "x", name: "Beatriz" }, key)).toBe(true);
+  });
+
+  it("is true for any non-favorite when the key belongs to a favorite", () => {
+    expect(isContactAfter({ ...ana, id: "x", name: "Aaron", isFavorite: false }, key)).toBe(true);
+  });
+
+  it("is false for contacts that sort earlier", () => {
+    expect(isContactAfter({ ...ana, id: "x", name: "Aaron" }, key)).toBe(false);
+  });
+
+  it("is false for the contact of the key itself", () => {
+    expect(isContactAfter(ana, key)).toBe(false);
+  });
+
+  it("is false for a favorite when the key belongs to a non-favorite", () => {
+    const carlos = contacts[0];
+    if (!carlos) throw new Error("fixture missing");
+    expect(isContactAfter(ana, contactKey(carlos))).toBe(false);
+  });
+});
+
+describe("contactKey and isContactKey", () => {
+  it("stores the normalized name", () => {
+    const luis = contacts[3];
+    if (!luis) throw new Error("fixture missing");
+    expect(contactKey(luis)).toEqual({ isFavorite: true, name: "luis hernandez", id: "4" });
+  });
+
+  it("accepts a key", () => {
+    expect(isContactKey({ isFavorite: false, name: "ana", id: "1" })).toBe(true);
+  });
+
+  it.each([
+    null,
+    "x",
+    {},
+    { isFavorite: "yes", name: "a", id: "1" },
+    { isFavorite: true, id: "1" },
+  ])("rejects %j", (value) => {
+    expect(isContactKey(value)).toBe(false);
+  });
+});
+
+describe("groupContacts", () => {
+  it("splits a sorted list in favorites and the rest, keeping the order", () => {
+    const { favorites, others } = groupContacts(sortContacts(contacts));
     expect(names(favorites)).toEqual(["Ana García", "Luis Hernández", "María López"]);
-    expect(names(others)).toEqual(["Carlos Ruiz"]);
+    expect(names(others)).toEqual(["Beto Díaz", "Carlos Ruiz"]);
   });
 
   it("returns empty groups for no contacts", () => {

@@ -1,16 +1,19 @@
 import type { ApiError } from "@/domain/errors";
 import { asCents } from "@/domain/money";
+import { sortMovements } from "@/domain/movements";
 import type { Result } from "@/domain/result";
 import type { Cents, Contact, Movement, Receipt, User } from "@/domain/types";
 
 export type StoredOutcome = Result<Receipt, ApiError>;
+
+type StoredEntry = { outcome: StoredOutcome; storedAt: number };
 
 type Db = {
   user: User;
   balanceCents: Cents;
   movements: Movement[];
   contacts: Contact[];
-  outcomesByKey: Map<string, StoredOutcome>;
+  outcomesByKey: Map<string, StoredEntry>;
 };
 
 function createInitialDb(): Db {
@@ -86,11 +89,9 @@ export function setBalance(balanceCents: Cents): void {
   db().balanceCents = balanceCents;
 }
 
-// Newest first.
+// Newest first (see sortMovements for the exact order).
 export function listMovements(): Movement[] {
-  return db()
-    .movements.map((item) => ({ ...item }))
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  return sortMovements(db().movements).map((item) => ({ ...item }));
 }
 
 export function addMovement(item: Movement): void {
@@ -105,10 +106,40 @@ export function addContact(contact: Contact): void {
   db().contacts.push({ ...contact });
 }
 
-export function getOutcome(idempotencyKey: string): StoredOutcome | undefined {
-  return db().outcomesByKey.get(idempotencyKey);
+// The idempotency store must not grow forever: entries expire after a TTL and the oldest ones
+// are dropped when the cap is reached. A real system would use a TTL in Redis or a database.
+export const OUTCOME_TTL_MS = 24 * 60 * 60 * 1000;
+export const MAX_STORED_OUTCOMES = 10_000;
+
+export function getOutcome(idempotencyKey: string, now = Date.now()): StoredOutcome | undefined {
+  const outcomes = db().outcomesByKey;
+  const entry = outcomes.get(idempotencyKey);
+  if (!entry) return undefined;
+
+  if (now - entry.storedAt > OUTCOME_TTL_MS) {
+    outcomes.delete(idempotencyKey);
+    return undefined;
+  }
+  return entry.outcome;
 }
 
-export function saveOutcome(idempotencyKey: string, outcome: StoredOutcome): void {
-  db().outcomesByKey.set(idempotencyKey, outcome);
+export function saveOutcome(
+  idempotencyKey: string,
+  outcome: StoredOutcome,
+  now = Date.now(),
+): void {
+  const outcomes = db().outcomesByKey;
+  // Deleting first moves a repeated key to the end, so Map order stays "oldest first".
+  outcomes.delete(idempotencyKey);
+  outcomes.set(idempotencyKey, { outcome, storedAt: now });
+
+  while (outcomes.size > MAX_STORED_OUTCOMES) {
+    const oldest = outcomes.keys().next();
+    if (oldest.done) break;
+    outcomes.delete(oldest.value);
+  }
+}
+
+export function outcomeCount(): number {
+  return db().outcomesByKey.size;
 }

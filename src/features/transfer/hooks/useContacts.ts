@@ -1,33 +1,24 @@
 "use client";
 
-import useAxios from "axios-hooks";
-import { useCallback, useMemo } from "react";
-import type { ContactsResponse } from "@/domain/api";
-import type { ApiError, ApiErrorBody } from "@/domain/errors";
+import { SCENARIO_HEADER, type ContactsResponse, type ListScenario } from "@/domain/api";
+import type { Page } from "@/domain/pagination";
 import type { Contact } from "@/domain/types";
-import { mapApiError } from "@/lib/map-api-error";
+import { usePaginatedList, type PaginatedList } from "@/lib/use-paginated-list";
 
-type UseContactsResult = {
-  contacts: Contact[] | null;
-  isLoading: boolean;
-  error: ApiError | null;
-  refetch: () => void;
-};
+// Module level so its identity never changes (usePaginatedList depends on it).
+function selectContacts(response: ContactsResponse): Page<Contact> {
+  return { items: response.contacts, nextCursor: response.nextCursor };
+}
 
-// Fetches on mount. ssr: false because the relative baseURL cannot be requested on the server.
-export function useContacts(): UseContactsResult {
-  const [{ data, loading, error }, execute] = useAxios<ContactsResponse, undefined, ApiErrorBody>(
-    { url: "/contacts" },
-    { useCache: false, ssr: false },
-  );
-
-  const refetch = useCallback(() => {
-    execute().catch(() => {
-      // The failure is exposed through `error`.
-    });
-  }, [execute]);
-
-  const apiError = useMemo(() => (error ? mapApiError(error) : null), [error]);
-
-  return { contacts: data?.contacts ?? null, isLoading: loading, error: apiError, refetch };
+// Contacts matching `query`, in pages: the search runs on the server, so the browser never
+// downloads the whole address book. Every new query starts again from page 1.
+// Pass an already debounced query, otherwise every key press would send a request.
+export function useContacts(query: string, scenario?: ListScenario): PaginatedList<Contact> {
+  const search = query.trim();
+  return usePaginatedList({
+    url: "/contacts",
+    params: search === "" ? undefined : { q: search },
+    headers: scenario ? { [SCENARIO_HEADER]: scenario } : undefined,
+    select: selectContacts,
+  });
 }

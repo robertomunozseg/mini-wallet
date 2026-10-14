@@ -24,11 +24,15 @@ describe("TransferFlow", () => {
   beforeEach(() => {
     router.push.mockReset();
     useContactsMock.mockReturnValue({
-      contacts: [
+      items: [
         { id: "1", name: "Ana García", phoneOrEmail: "ana.garcia@example.com", isFavorite: true },
       ],
       isLoading: false,
+      isLoadingMore: false,
       error: null,
+      loadMoreError: null,
+      hasMore: false,
+      loadMore: vi.fn(),
       refetch: vi.fn(),
     });
   });
