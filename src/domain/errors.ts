@@ -10,9 +10,11 @@ export type ApiErrorCode =
 export type TransferValidationError =
   "AMOUNT_REQUIRED" | "AMOUNT_NOT_POSITIVE" | "INSUFFICIENT_BALANCE" | "RECIPIENT_REQUIRED";
 
+export type ApiError = {
+  code: ApiErrorCode;
+  message: string;
+};
+
 export type ApiErrorBody = {
-  error: {
-    code: ApiErrorCode;
-    message: string;
-  };
+  error: ApiError;
 };
