@@ -2,23 +2,37 @@
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { SCENARIOS } from "@/domain/api";
 import { formatMoney, subtractCents } from "@/domain/money";
 import { TRANSFER_ERROR_MESSAGES } from "@/domain/transfer-rules";
 import type { Cents } from "@/domain/types";
+import { isDemoMode } from "@/lib/demo-mode";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   selectAmountCents,
+  selectDemoScenario,
   selectRecipient,
   selectTransferValidation,
-  startConfirm,
+  setDemoScenario,
+  type DemoScenario,
 } from "@/store/slices/transferSlice";
 
-type SummaryStepProps = { balanceCents: Cents };
+type SummaryStepProps = {
+  balanceCents: Cents;
+  onConfirm: () => void;
+};
 
-export function SummaryStep({ balanceCents }: SummaryStepProps) {
+const DEMO_OPTIONS: readonly DemoScenario[] = ["random", ...SCENARIOS];
+
+function isDemoScenario(value: string): value is DemoScenario {
+  return DEMO_OPTIONS.some((option) => option === value);
+}
+
+export function SummaryStep({ balanceCents, onConfirm }: SummaryStepProps) {
   const dispatch = useAppDispatch();
   const amountCents = useAppSelector(selectAmountCents);
   const recipient = useAppSelector(selectRecipient);
+  const demoScenario = useAppSelector(selectDemoScenario);
   const validation = useAppSelector((state) => selectTransferValidation(state, balanceCents));
 
   return (
@@ -56,7 +70,31 @@ export function SummaryStep({ balanceCents }: SummaryStepProps) {
         </ul>
       )}
 
-      <Button disabled={!validation.ok} onClick={() => dispatch(startConfirm())}>
+      {isDemoMode() && (
+        <div className="flex flex-col gap-1">
+          <label htmlFor="demo-scenario" className="text-sm font-medium text-zinc-800">
+            Simulated scenario
+          </label>
+          <select
+            id="demo-scenario"
+            value={demoScenario}
+            onChange={(event) => {
+              if (isDemoScenario(event.target.value)) {
+                dispatch(setDemoScenario(event.target.value));
+              }
+            }}
+            className="min-h-11 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-base text-zinc-900 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-blue-600"
+          >
+            {DEMO_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {option === "random" ? "Random (default)" : option}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      <Button disabled={!validation.ok} onClick={onConfirm}>
         Confirm
       </Button>
     </div>

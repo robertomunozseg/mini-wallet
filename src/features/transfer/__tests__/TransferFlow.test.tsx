@@ -1,13 +1,14 @@
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { asCents } from "@/domain/money";
+import { installHttpAdapter, jsonResponse, networkError } from "@/test-utils/http-adapter";
 import { renderWithStore } from "@/test-utils/render-with-store";
-import { goToStep, setAmount, setRecipient, startConfirm } from "@/store/slices/transferSlice";
+import { goToStep, setAmount, setRecipient } from "@/store/slices/transferSlice";
 import { makeStore } from "@/store/store";
 import { TransferFlow } from "../components/TransferFlow";
 
-const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn() }));
+const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
 
 const useContactsMock = vi.hoisted(() => vi.fn());
@@ -107,38 +108,97 @@ describe("TransferFlow", () => {
         amountCents: null,
         recipient: "",
         idempotencyKey: null,
-        lastResult: null,
+        demoScenario: "random",
       });
     });
   });
 
-  describe("confirmation placeholder", () => {
-    function storeConfirming() {
+  describe("confirmation", () => {
+    function storeAtSummary() {
       const store = makeStore();
       store.dispatch(setAmount(asCents(5_000)));
       store.dispatch(setRecipient("Ana García"));
-      store.dispatch(startConfirm());
+      store.dispatch(goToStep("summary"));
       return store;
     }
 
-    it("shows a temporary message and keeps the Summary step highlighted", () => {
-      renderWithStore(<TransferFlow balanceCents={balanceCents} />, storeConfirming());
+    const receipt = {
+      transaction: {
+        id: "tx-1",
+        amountCents: 5_000,
+        recipient: "Ana García",
+        createdAt: "2026-10-14T12:00:00.000Z",
+        status: "completed",
+      },
+      newBalanceCents: 95_000,
+    };
 
-      expect(screen.getByRole("status")).toHaveTextContent(
-        "Confirmation arrives in the next phase",
-      );
+    let restore = () => {};
+    afterEach(() => {
+      restore();
+    });
+
+    it("confirms, shows the result and keeps the Summary step highlighted", async () => {
+      restore = installHttpAdapter((config) => networkError(config));
+      renderWithStore(<TransferFlow balanceCents={balanceCents} />, storeAtSummary());
+
+      await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
+
+      expect(await screen.findByRole("button", { name: "Try again" })).toBeVisible();
       expect(currentStep()).toContain("Summary");
     });
 
-    it("goes back to the summary keeping the idempotency key", async () => {
-      const store = storeConfirming();
-      const key = store.getState().transfer.idempotencyKey;
+    it("retries with the same key and opens the receipt", async () => {
+      let calls = 0;
+      restore = installHttpAdapter((config) => {
+        calls += 1;
+        return calls === 1 ? networkError(config) : jsonResponse(config, 201, { receipt });
+      });
+      renderWithStore(<TransferFlow balanceCents={balanceCents} />, storeAtSummary());
+
+      await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
+      await userEvent.click(await screen.findByRole("button", { name: "Try again" }));
+
+      await waitFor(() => expect(router.push).toHaveBeenCalledWith("/transfer/receipt/tx-1"));
+    });
+
+    it("Change amount goes back to the amount step with a new key", async () => {
+      restore = installHttpAdapter((config) =>
+        jsonResponse(config, 422, { error: { code: "INSUFFICIENT_FUNDS", message: "x" } }),
+      );
+      const store = storeAtSummary();
       renderWithStore(<TransferFlow balanceCents={balanceCents} />, store);
 
+      await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
+      await userEvent.click(await screen.findByRole("button", { name: "Change amount" }));
+
+      expect(store.getState().transfer.step).toBe("amount");
+      expect(store.getState().transfer.idempotencyKey).toBeNull();
+      expect(screen.getByLabelText("Amount (MXN)")).toHaveValue("50.00");
+    });
+
+    it("goes back to the summary after an error, keeping the idempotency key", async () => {
+      restore = installHttpAdapter((config) => networkError(config));
+      const store = storeAtSummary();
+      renderWithStore(<TransferFlow balanceCents={balanceCents} />, store);
+
+      await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
+      await screen.findByRole("button", { name: "Try again" });
+      const key = store.getState().transfer.idempotencyKey;
       await userEvent.click(screen.getByRole("button", { name: /Back/ }));
 
       expect(store.getState().transfer.step).toBe("summary");
       expect(store.getState().transfer.idempotencyKey).toBe(key);
+    });
+
+    it("disables Back while the transfer is being processed", async () => {
+      restore = installHttpAdapter(() => new Promise(() => {}));
+      renderWithStore(<TransferFlow balanceCents={balanceCents} />, storeAtSummary());
+
+      await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
+
+      expect(await screen.findByText("Processing…")).toBeVisible();
+      expect(screen.getByRole("button", { name: /Back/ })).toBeDisabled();
     });
   });
 });

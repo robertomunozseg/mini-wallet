@@ -11,6 +11,8 @@ import type { TransferStep } from "@/store/slices/transferSlice";
 import { AmountStep } from "./AmountStep";
 import { RecipientStep } from "./RecipientStep";
 import { StepIndicator } from "./StepIndicator";
+import { useConfirmTransfer } from "../hooks/useConfirmTransfer";
+import { ConfirmationResult } from "./ConfirmationResult";
 import { SummaryStep } from "./SummaryStep";
 
 type TransferFlowProps = {
@@ -21,13 +23,12 @@ type TransferFlowProps = {
 
 const STEP_LABELS = ["Amount", "Recipient", "Summary"] as const;
 
-// Which indicator step each store step belongs to (confirming and result belong to the summary).
+// Which indicator step each store step belongs to (confirming belongs to the summary).
 const INDICATOR_INDEX: Record<TransferStep, number> = {
   amount: 0,
   recipient: 1,
   summary: 2,
   confirming: 2,
-  result: 2,
 };
 
 // The step "Back" goes to. The first step leaves the flow instead.
@@ -36,13 +37,15 @@ const PREVIOUS_STEP: Record<TransferStep, TransferStep | null> = {
   recipient: "amount",
   summary: "recipient",
   confirming: "summary",
-  result: "summary",
 };
 
 export function TransferFlow({ balanceCents, scenario }: TransferFlowProps) {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const step = useAppSelector(selectTransferStep);
+  const { state: confirmState, confirm, retry } = useConfirmTransfer();
+  // Going back while the request is in flight would hide a transfer that is still being made.
+  const isSending = confirmState.status === "processing" || confirmState.status === "success";
   const [flowId, setFlowId] = useState(0);
 
   // Leaving the flow (Back from the first step, another link, browser back) clears the draft.
@@ -67,7 +70,7 @@ export function TransferFlow({ balanceCents, scenario }: TransferFlowProps) {
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-6">
       <div>
-        <Button variant="ghost" onClick={handleBack} className="-ml-4">
+        <Button variant="ghost" onClick={handleBack} disabled={isSending} className="-ml-4">
           ← Back
         </Button>
       </div>
@@ -77,13 +80,8 @@ export function TransferFlow({ balanceCents, scenario }: TransferFlowProps) {
       <div key={flowId}>
         {step === "amount" && <AmountStep balanceCents={balanceCents} />}
         {step === "recipient" && <RecipientStep balanceCents={balanceCents} scenario={scenario} />}
-        {step === "summary" && <SummaryStep balanceCents={balanceCents} />}
-        {(step === "confirming" || step === "result") && (
-          // Temporary: the confirmation request and the receipt are built in the next phase.
-          <p role="status" className="rounded-lg bg-zinc-100 p-4 text-zinc-700">
-            Confirmation arrives in the next phase. Use Back to return to the summary.
-          </p>
-        )}
+        {step === "summary" && <SummaryStep balanceCents={balanceCents} onConfirm={confirm} />}
+        {step === "confirming" && <ConfirmationResult state={confirmState} onRetry={retry} />}
       </div>
     </div>
   );
