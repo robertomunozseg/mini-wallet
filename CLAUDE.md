@@ -53,6 +53,7 @@ src/components/ui → componentes presentacionales reutilizables, sin lógica de
 4. No hagas `git push` ni merges sin que el usuario lo pida.
 5. No inventes contenido para AI_USAGE.md: solo da formato a las notas del usuario.
 6. Si una decisión tiene trade-offs relevantes, explícalos en 2–3 líneas para que el usuario decida y pueda documentarlo en DECISIONS.md.
+7. Al terminar cada fase, actualiza AI_USAGE.md **antes de hacer commit**. Pídele al usuario sus notas de la fase y dales formato (regla 5); si no las tiene, no escribas nada y avísale en lugar de inventar contenido.
 
 ## Scripts
 `dev` · `build` · `start` · `lint` · `typecheck` · `test` · `test:watch` · `test:e2e` · `format`
