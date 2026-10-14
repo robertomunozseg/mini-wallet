@@ -1,12 +1,46 @@
+import type { ListScenario } from "@/domain/api";
+import {
+  contactKey,
+  filterContacts,
+  isContactAfter,
+  isContactKey,
+  sortContacts,
+} from "@/domain/contacts";
 import type { ApiError } from "@/domain/errors";
+import { paginate, type Page } from "@/domain/pagination";
 import { err, ok, type Result } from "@/domain/result";
 import { newContactSchema } from "@/domain/schemas";
 import type { Contact } from "@/domain/types";
 import { apiError, validationError } from "../api-error";
+import { largeContacts } from "../large-dataset";
 import { addContact, listContacts } from "../mock-db";
 
-export function list(): Contact[] {
-  return listContacts();
+type ListParams = {
+  q?: string | undefined;
+  limit: number;
+  cursor?: string | undefined;
+  scenario?: ListScenario | null | undefined;
+};
+
+// One page of contacts matching the search, favorites first and then by name. Searching on the
+// server keeps the response small however big the address book is.
+export function list({
+  q = "",
+  limit,
+  cursor,
+  scenario,
+}: ListParams): Result<Page<Contact>, ApiError> {
+  // The large dataset is already sorted; the real list is small, so it is sorted per request.
+  const source = scenario === "large" ? largeContacts() : sortContacts(listContacts());
+  const page = paginate(filterContacts(source, q), {
+    limit,
+    cursor,
+    keyOf: contactKey,
+    isKey: isContactKey,
+    isAfter: isContactAfter,
+  });
+  if (!page.ok) return err(apiError("VALIDATION_ERROR", "The cursor is not valid."));
+  return page;
 }
 
 function normalize(phoneOrEmail: string): string {

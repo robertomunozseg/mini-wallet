@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveMovementsScenario, resolveScenario, SCENARIOS } from "../scenario";
+import { resolveListScenario, resolveScenario, SCENARIOS } from "../scenario";
 
 function requestWith(header?: string): Pick<Request, "headers"> {
   const headers = new Headers();
@@ -47,14 +47,15 @@ describe("resolveScenario", () => {
   });
 });
 
-describe("resolveMovementsScenario", () => {
-  it("accepts empty and error", () => {
-    expect(resolveMovementsScenario(requestWith("empty"))).toBe("empty");
-    expect(resolveMovementsScenario(requestWith("error"))).toBe("error");
+describe("resolveListScenario", () => {
+  it("accepts empty, error and large", () => {
+    expect(resolveListScenario(requestWith("empty"))).toBe("empty");
+    expect(resolveListScenario(requestWith("error"))).toBe("error");
+    expect(resolveListScenario(requestWith("large"))).toBe("large");
   });
 
   it("returns null for anything else", () => {
-    expect(resolveMovementsScenario(requestWith())).toBeNull();
-    expect(resolveMovementsScenario(requestWith("success"))).toBeNull();
+    expect(resolveListScenario(requestWith())).toBeNull();
+    expect(resolveListScenario(requestWith("success"))).toBeNull();
   });
 });
