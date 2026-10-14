@@ -1,26 +1,13 @@
-import { expect, test, type Page } from "@playwright/test";
-
-// Next.js adds its own role="alert" route announcer, so alerts are matched by their text.
-function alertWithText(page: Page, text: string) {
-  return page.getByRole("alert").filter({ hasText: text });
-}
-
-async function signIn(page: Page) {
-  await page.goto("/login");
-  await page.getByLabel("Email or phone").fill("5512345678");
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(/\/home$/);
-}
+import { expect, test } from "./fixtures";
+import { alertWithText, homeBalance } from "./helpers";
 
 test.describe("home", () => {
-  test("shows the balance, the user and the movements", async ({ page }) => {
-    await signIn(page);
-
+  test("shows the user, the balance and the movements", async ({ signedIn: page }) => {
     await expect(page.getByRole("heading", { name: "Home" })).toBeVisible();
     await expect(page.getByText("Welcome back, Demo User")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Available balance" })).toBeVisible();
-    // The exact balance can change if transfers were made, so only the format is checked.
-    await expect(page.getByText(/^\$[\d,]+\.\d{2}$/).first()).toBeVisible();
+    // The exact balance can change if transfers were made, so only that it is a positive amount.
+    expect(await homeBalance(page)).toBeGreaterThan(0);
 
     await expect(page.getByRole("heading", { name: "Recent movements" })).toBeVisible();
     await expect(page.getByRole("listitem").first()).toBeVisible();
@@ -28,24 +15,21 @@ test.describe("home", () => {
     expect(await page.getByRole("listitem").count()).toBeGreaterThanOrEqual(6);
   });
 
-  test("has a New transfer link", async ({ page }) => {
-    await signIn(page);
+  test("has a New transfer link", async ({ signedIn: page }) => {
     await expect(page.getByRole("link", { name: "New transfer" })).toHaveAttribute(
       "href",
       "/transfer",
     );
   });
 
-  test("?scenario=empty shows the empty state", async ({ page }) => {
-    await signIn(page);
+  test("?scenario=empty shows the empty state", async ({ signedIn: page }) => {
     await page.goto("/home?scenario=empty");
 
     await expect(page.getByText("No movements yet")).toBeVisible();
     await expect(page.getByRole("listitem")).toHaveCount(0);
   });
 
-  test("?scenario=error shows the error state with a retry button", async ({ page }) => {
-    await signIn(page);
+  test("?scenario=error shows the error state with a retry button", async ({ signedIn: page }) => {
     await page.goto("/home?scenario=error");
 
     await expect(alertWithText(page, "We couldn't load your movements")).toBeVisible();
@@ -54,8 +38,7 @@ test.describe("home", () => {
     await expect(alertWithText(page, "We couldn't load your movements")).toBeVisible();
   });
 
-  test("ignores an unknown scenario", async ({ page }) => {
-    await signIn(page);
+  test("ignores an unknown scenario", async ({ signedIn: page }) => {
     await page.goto("/home?scenario=nonsense");
 
     await expect(page.getByRole("listitem").first()).toBeVisible();
@@ -70,8 +53,7 @@ test.describe("home", () => {
 test.describe("home with a large history (?scenario=large)", () => {
   const MOVEMENTS_REGION = { name: "Movements" };
 
-  test("renders a few rows even though there are 10,000 movements", async ({ page }) => {
-    await signIn(page);
+  test("renders a few rows even though there are 10,000 movements", async ({ signedIn: page }) => {
     await page.goto("/home?scenario=large");
 
     await expect(page.getByRole("region", MOVEMENTS_REGION)).toBeVisible();
@@ -82,9 +64,9 @@ test.describe("home with a large history (?scenario=large)", () => {
     expect(rows).toBeLessThan(30);
   });
 
-  test("the first page comes with the page: no movements request on load", async ({ page }) => {
-    await signIn(page);
-
+  test("the first page comes with the page: no movements request on load", async ({
+    signedIn: page,
+  }) => {
     const movementRequests: string[] = [];
     page.on("request", (request) => {
       if (new URL(request.url()).pathname === "/api/movements")
@@ -98,8 +80,9 @@ test.describe("home with a large history (?scenario=large)", () => {
     expect(movementRequests).toEqual([]);
   });
 
-  test("scrolling to the end loads the next page and keeps the DOM small", async ({ page }) => {
-    await signIn(page);
+  test("scrolling to the end loads the next page and keeps the DOM small", async ({
+    signedIn: page,
+  }) => {
     const cursorRequests: string[] = [];
     page.on("request", (request) => {
       const url = new URL(request.url());
@@ -125,8 +108,7 @@ test.describe("home with a large history (?scenario=large)", () => {
     await expect(page.getByRole("listitem").first()).not.toHaveAttribute("aria-posinset", "1");
   });
 
-  test("the scroll area can be reached with the keyboard", async ({ page }) => {
-    await signIn(page);
+  test("the scroll area can be reached with the keyboard", async ({ signedIn: page }) => {
     await page.goto("/home?scenario=large");
     const region = page.getByRole("region", MOVEMENTS_REGION);
 

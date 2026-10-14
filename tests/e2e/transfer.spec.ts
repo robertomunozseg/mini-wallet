@@ -1,22 +1,13 @@
-import { expect, test, type Page } from "@playwright/test";
-
-// Next.js adds its own role="alert" route announcer, so alerts are matched by their text.
-function alertWithText(page: Page, text: string) {
-  return page.getByRole("alert").filter({ hasText: text });
-}
-
-async function signIn(page: Page) {
-  await page.goto("/login");
-  await page.getByLabel("Email or phone").fill("5512345678");
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(/\/home$/);
-}
-
-async function openTransfer(page: Page) {
-  await signIn(page);
-  await page.getByRole("link", { name: "New transfer" }).click();
-  await expect(page).toHaveURL(/\/transfer$/);
-}
+import type { Page } from "@playwright/test";
+import { expect, test } from "./fixtures";
+import {
+  alertWithText,
+  forceScenario,
+  homeBalance,
+  openTransfer,
+  reachRecipientStep,
+  reachSummary,
+} from "./helpers";
 
 // A phone number that is different on every run, because created contacts live in memory
 // until the server restarts and duplicates are rejected.
@@ -30,7 +21,7 @@ test.describe("transfer flow", () => {
     await expect(page).toHaveURL(/\/login$/);
   });
 
-  test("opens from the Home and shows the amount step", async ({ page }) => {
+  test("opens from the Home and shows the amount step", async ({ signedIn: page }) => {
     await openTransfer(page);
 
     await expect(page.getByRole("heading", { name: "New transfer" })).toBeVisible();
@@ -38,10 +29,13 @@ test.describe("transfer flow", () => {
       page.getByRole("heading", { name: "How much do you want to send?" }),
     ).toBeVisible();
     await expect(page.getByText(/Available balance:/)).toBeVisible();
+    // The step indicator has no role that can say "current", so the attribute is used.
     await expect(page.locator('li[aria-current="step"]')).toContainText("Amount");
   });
 
-  test("explains amount errors inline", async ({ page }) => {
+  test("blocks an amount above the balance and explains amount errors inline", async ({
+    signedIn: page,
+  }) => {
     await openTransfer(page);
     const amount = page.getByLabel("Amount (MXN)");
 
@@ -53,6 +47,8 @@ test.describe("transfer flow", () => {
 
     await amount.fill("999999999");
     await expect(alertWithText(page, "Insufficient balance.")).toBeVisible();
+    await page.getByRole("button", { name: "Continue" }).click();
+    // Still on the amount step: it cannot continue with more than the balance.
     await expect(
       page.getByRole("heading", { name: "How much do you want to send?" }),
     ).toBeVisible();
@@ -61,25 +57,23 @@ test.describe("transfer flow", () => {
     await expect(page.getByLabel("Amount (MXN)")).not.toHaveAttribute("aria-invalid", "true");
   });
 
-  test("walks through amount, recipient and summary", async ({ page }) => {
-    await openTransfer(page);
-
-    await page.getByLabel("Amount (MXN)").fill("100");
-    await page.getByRole("button", { name: "Continue" }).click();
-    await expect(page.getByRole("heading", { name: "Who is receiving it?" })).toBeVisible();
+  test("does not continue without a recipient", async ({ signedIn: page }) => {
+    await reachRecipientStep(page, "100");
 
     // Favorites come first.
     await expect(page.getByRole("group", { name: "Favorites" })).toBeVisible();
     await expect(page.getByRole("radio").first()).toBeVisible();
 
-    // Continue without a recipient explains what is missing.
     await page.getByRole("button", { name: "Continue" }).click();
+
     await expect(alertWithText(page, "Choose a recipient.")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Who is receiving it?" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Confirm" })).toHaveCount(0);
+  });
 
-    await page.getByRole("radio", { name: /Ana García/ }).check();
-    await page.getByRole("button", { name: "Continue" }).click();
+  test("walks through amount, recipient and summary", async ({ signedIn: page }) => {
+    await reachSummary(page, "100");
 
-    await expect(page.getByRole("heading", { name: "Review your transfer" })).toBeVisible();
     await expect(page.getByText("$100.00").first()).toBeVisible();
     // exact: the hidden Home page (kept alive by Next) also contains "Sent to Ana García".
     await expect(page.getByText("Ana García", { exact: true })).toBeVisible();
@@ -88,7 +82,7 @@ test.describe("transfer flow", () => {
   });
 
   test("searches contacts on the server ignoring accents, with one request per search", async ({
-    page,
+    signedIn: page,
   }) => {
     const searches: string[] = [];
     page.on("request", (request) => {
@@ -98,9 +92,7 @@ test.describe("transfer flow", () => {
       }
     });
 
-    await openTransfer(page);
-    await page.getByLabel("Amount (MXN)").fill("10");
-    await page.getByRole("button", { name: "Continue" }).click();
+    await reachRecipientStep(page, "10");
     await expect(page.getByRole("radio").first()).toBeVisible();
 
     // Typed in one go: the debounce sends a single request, with the final text.
@@ -114,10 +106,8 @@ test.describe("transfer flow", () => {
     expect(searches).toEqual(["garcia", "zzz"]);
   });
 
-  test("creates a new contact, selects it and rejects a duplicate", async ({ page }) => {
-    await openTransfer(page);
-    await page.getByLabel("Amount (MXN)").fill("10");
-    await page.getByRole("button", { name: "Continue" }).click();
+  test("creates a new contact, selects it and rejects a duplicate", async ({ signedIn: page }) => {
+    await reachRecipientStep(page, "10");
 
     // Scoped to the form: the hidden login page (kept alive by Next) has a field with the same label.
     const form = page
@@ -145,7 +135,7 @@ test.describe("transfer flow", () => {
     ).toBeVisible();
   });
 
-  test("Back keeps the data, and leaving the flow clears it", async ({ page }) => {
+  test("Back keeps the data, and leaving the flow clears it", async ({ signedIn: page }) => {
     await openTransfer(page);
     await page.getByLabel("Amount (MXN)").fill("75");
     await page.getByRole("button", { name: "Continue" }).click();
@@ -161,16 +151,71 @@ test.describe("transfer flow", () => {
   });
 });
 
+test.describe("successful transfer and receipt", () => {
+  test("goes from the amount to the receipt, and the Home has the new balance", async ({
+    signedIn: page,
+  }) => {
+    const balanceBefore = await homeBalance(page);
+    await forceScenario(page, "success");
+
+    await reachSummary(page, "1");
+    await page.getByRole("button", { name: "Confirm" }).click();
+
+    await expect(page).toHaveURL(/\/transfer\/receipt\/[\w-]+$/);
+    await expect(page.getByRole("heading", { name: "Receipt" })).toBeVisible();
+    // The hidden transfer page can stay in the DOM, so the receipt is searched in its own <main>.
+    const receipt = page.getByRole("main").filter({ hasText: "Reference" });
+    await expect(receipt.getByText("Transfer completed")).toBeVisible();
+    await expect(receipt.getByText("Ana García")).toBeVisible();
+    await expect(receipt.getByText("$1.00", { exact: true })).toBeVisible();
+
+    // A reload shows the same receipt: it comes from the server, not from the browser state.
+    await page.reload();
+    await expect(page.getByRole("main").getByText("Transfer completed")).toBeVisible();
+
+    await page.getByRole("link", { name: "Back to home" }).click();
+    await expect(page).toHaveURL(/\/home$/);
+    // Tests run in parallel against the same server, so other transfers can also lower the
+    // balance: it must have dropped by at least the 1.00 sent here (a stale Home would not).
+    await expect.poll(() => homeBalance(page)).toBeLessThanOrEqual(balanceBefore - 1);
+  });
+
+  test("a new transfer starts from scratch after a receipt", async ({ signedIn: page }) => {
+    await forceScenario(page, "success");
+    await reachSummary(page);
+    await page.getByRole("button", { name: "Confirm" }).click();
+    await expect(page).toHaveURL(/\/transfer\/receipt\//);
+
+    await page.getByRole("link", { name: "New transfer" }).click();
+
+    await expect(
+      page.getByRole("heading", { name: "How much do you want to send?" }),
+    ).toBeVisible();
+    await expect(page.getByLabel("Amount (MXN)")).toHaveValue("");
+  });
+
+  test("an unknown receipt shows Receipt not found", async ({ signedIn: page }) => {
+    await page.goto("/transfer/receipt/does-not-exist");
+
+    await expect(page.getByRole("heading", { name: "Receipt not found" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Back to home" })).toBeVisible();
+  });
+
+  test("an anonymous user is sent to /login from a receipt", async ({ page }) => {
+    await page.goto("/transfer/receipt/anything");
+    await expect(page).toHaveURL(/\/login$/);
+  });
+});
+
 test.describe("transfer with a large address book (?scenario=large)", () => {
   async function openRecipientStep(page: Page) {
-    await signIn(page);
     await page.goto("/transfer?scenario=large");
     await page.getByLabel("Amount (MXN)").fill("10");
     await page.getByRole("button", { name: "Continue" }).click();
     await expect(page.getByRole("radio").first()).toBeVisible();
   }
 
-  test("shows a page of contacts and loads more on demand", async ({ page }) => {
+  test("shows a page of contacts and loads more on demand", async ({ signedIn: page }) => {
     await openRecipientStep(page);
 
     // One page (20), not 5,000 contacts.
@@ -179,7 +224,7 @@ test.describe("transfer with a large address book (?scenario=large)", () => {
     await expect(page.getByRole("radio")).toHaveCount(40);
   });
 
-  test("searches the whole address book on the server", async ({ page }) => {
+  test("searches the whole address book on the server", async ({ signedIn: page }) => {
     await openRecipientStep(page);
 
     await page.getByLabel("Search contacts").pressSequentially("hernandez");
