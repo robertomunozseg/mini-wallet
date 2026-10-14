@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import type { ListScenario } from "@/domain/api";
 import type { Cents } from "@/domain/types";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { goToStep, reset, selectTransferStep } from "@/store/slices/transferSlice";
@@ -12,7 +13,11 @@ import { RecipientStep } from "./RecipientStep";
 import { StepIndicator } from "./StepIndicator";
 import { SummaryStep } from "./SummaryStep";
 
-type TransferFlowProps = { balanceCents: Cents };
+type TransferFlowProps = {
+  balanceCents: Cents;
+  // ?scenario=large in the URL: search a big generated address book (see ListScenario).
+  scenario?: ListScenario | undefined;
+};
 
 const STEP_LABELS = ["Amount", "Recipient", "Summary"] as const;
 
@@ -34,7 +39,7 @@ const PREVIOUS_STEP: Record<TransferStep, TransferStep | null> = {
   result: "summary",
 };
 
-export function TransferFlow({ balanceCents }: TransferFlowProps) {
+export function TransferFlow({ balanceCents, scenario }: TransferFlowProps) {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const step = useAppSelector(selectTransferStep);
@@ -71,7 +76,7 @@ export function TransferFlow({ balanceCents }: TransferFlowProps) {
 
       <div key={flowId}>
         {step === "amount" && <AmountStep balanceCents={balanceCents} />}
-        {step === "recipient" && <RecipientStep balanceCents={balanceCents} />}
+        {step === "recipient" && <RecipientStep balanceCents={balanceCents} scenario={scenario} />}
         {step === "summary" && <SummaryStep balanceCents={balanceCents} />}
         {(step === "confirming" || step === "result") && (
           // Temporary: the confirmation request and the receipt are built in the next phase.

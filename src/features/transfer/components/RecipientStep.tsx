@@ -1,14 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import { useCallback, useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { Input } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
+import type { ListScenario } from "@/domain/api";
 import { groupContacts } from "@/domain/contacts";
 import { TRANSFER_ERROR_MESSAGES } from "@/domain/transfer-rules";
 import type { Cents, Contact } from "@/domain/types";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   goToStep,
@@ -18,19 +21,34 @@ import {
 } from "@/store/slices/transferSlice";
 import { useContacts } from "../hooks/useContacts";
 import { ContactGroup } from "./ContactGroup";
-import { NewContactForm } from "./NewContactForm";
 
-type RecipientStepProps = { balanceCents: Cents };
+// The form is only needed when the user taps "New contact", so its code is loaded on demand
+// instead of being part of the first download of this step.
+const NewContactForm = dynamic(
+  () => import("./NewContactForm").then((module) => module.NewContactForm),
+  { loading: () => <Skeleton className="h-72 w-full" /> },
+);
+
+type RecipientStepProps = {
+  balanceCents: Cents;
+  scenario?: ListScenario | undefined;
+};
 
 const SKELETON_ROWS = 4;
+// How long the user must stop typing before the search request is sent.
+export const SEARCH_DEBOUNCE_MS = 300;
 
-export function RecipientStep({ balanceCents }: RecipientStepProps) {
+export function RecipientStep({ balanceCents, scenario }: RecipientStepProps) {
   const dispatch = useAppDispatch();
   const recipient = useAppSelector(selectRecipient);
   const validation = useAppSelector((state) => selectTransferValidation(state, balanceCents));
-  const { contacts, isLoading, error, refetch } = useContacts();
 
+  // `query` is what the input shows (updated on every key); `debouncedQuery` is what is searched.
   const [query, setQuery] = useState("");
+  const debouncedQuery = useDebouncedValue(query, SEARCH_DEBOUNCE_MS);
+  const { items, isLoading, isLoadingMore, error, loadMoreError, hasMore, loadMore, refetch } =
+    useContacts(debouncedQuery, scenario);
+
   const [showForm, setShowForm] = useState(false);
   const [attempted, setAttempted] = useState(false);
   // The store only keeps the recipient name (what the API receives), and two contacts can share a
@@ -38,25 +56,36 @@ export function RecipientStep({ balanceCents }: RecipientStepProps) {
   // contact with the stored name is shown as selected.
   const [chosenId, setChosenId] = useState<string | null>(null);
 
-  const groups = useMemo(() => groupContacts(contacts ?? [], query), [contacts, query]);
-  const hasMatches = groups.favorites.length + groups.others.length > 0;
+  // The server already sorted favorites first; this only splits the list in two groups. useMemo
+  // keeps the same arrays between renders, which lets the memoized groups skip re-rendering.
+  const groups = useMemo(() => groupContacts(items), [items]);
 
+  const isSearching = query.trim() !== debouncedQuery.trim() || isLoading;
   const recipientMissing = !validation.ok && validation.error.includes("RECIPIENT_REQUIRED");
   const selectedId =
-    chosenId ??
-    (recipient === "" ? null : (contacts?.find((c) => c.name === recipient)?.id ?? null));
+    chosenId ?? (recipient === "" ? null : (items.find((c) => c.name === recipient)?.id ?? null));
 
-  function handleSelect(contact: Contact) {
-    setChosenId(contact.id);
-    dispatch(setRecipient(contact.name));
-  }
+  // useCallback: ContactOption is memoized and receives this function; a new one on every render
+  // would make every option re-render each time.
+  const handleSelect = useCallback(
+    (contact: Contact) => {
+      setChosenId(contact.id);
+      dispatch(setRecipient(contact.name));
+    },
+    [dispatch],
+  );
 
-  function handleCreated(contact: Contact) {
-    setChosenId(contact.id);
-    dispatch(setRecipient(contact.name));
-    refetch();
-    setShowForm(false);
-  }
+  const handleCreated = useCallback(
+    (contact: Contact) => {
+      setChosenId(contact.id);
+      dispatch(setRecipient(contact.name));
+      refetch();
+      setShowForm(false);
+    },
+    [dispatch, refetch],
+  );
+
+  const handleCancelForm = useCallback(() => setShowForm(false), []);
 
   function handleContinue() {
     setAttempted(true);
@@ -65,7 +94,7 @@ export function RecipientStep({ balanceCents }: RecipientStepProps) {
   }
 
   function renderContacts() {
-    if (contacts === null && isLoading) {
+    if (isLoading && items.length === 0) {
       return (
         <div role="status" className="flex flex-col gap-2">
           <span className="sr-only">Loading contacts</span>
@@ -75,7 +104,7 @@ export function RecipientStep({ balanceCents }: RecipientStepProps) {
         </div>
       );
     }
-    if (contacts === null && error) {
+    if (error) {
       return (
         <ErrorState
           title="We couldn't load your contacts"
@@ -84,16 +113,18 @@ export function RecipientStep({ balanceCents }: RecipientStepProps) {
         />
       );
     }
-    if (!contacts || contacts.length === 0) {
-      return (
+    if (items.length === 0) {
+      if (isLoading) return null;
+      return debouncedQuery.trim() === "" ? (
         <EmptyState
           title="No contacts yet"
           description="Add a new contact to send your first transfer."
         />
+      ) : (
+        <p className="py-4 text-center text-zinc-600">
+          No contacts match “{debouncedQuery.trim()}”.
+        </p>
       );
-    }
-    if (!hasMatches) {
-      return <p className="py-4 text-center text-zinc-600">No contacts match “{query.trim()}”.</p>;
     }
     return (
       <div className="flex flex-col gap-4">
@@ -109,6 +140,16 @@ export function RecipientStep({ balanceCents }: RecipientStepProps) {
           selectedId={selectedId}
           onSelect={handleSelect}
         />
+        {loadMoreError && (
+          <p role="alert" className="text-sm text-red-700">
+            {loadMoreError.message}
+          </p>
+        )}
+        {hasMore && (
+          <Button variant="secondary" loading={isLoadingMore} onClick={loadMore}>
+            Load more
+          </Button>
+        )}
       </div>
     );
   }
@@ -124,11 +165,14 @@ export function RecipientStep({ balanceCents }: RecipientStepProps) {
         onChange={(event) => setQuery(event.target.value)}
         autoComplete="off"
       />
+      <p aria-live="polite" className="-mt-2 min-h-5 text-sm text-zinc-600">
+        {isSearching ? "Searching…" : ""}
+      </p>
 
       {renderContacts()}
 
       {showForm ? (
-        <NewContactForm onCreated={handleCreated} onCancel={() => setShowForm(false)} />
+        <NewContactForm onCreated={handleCreated} onCancel={handleCancelForm} />
       ) : (
         <Button variant="secondary" onClick={() => setShowForm(true)}>
           New contact

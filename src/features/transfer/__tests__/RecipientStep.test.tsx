@@ -1,8 +1,9 @@
-import { screen, within } from "@testing-library/react";
+import { act, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { asCents } from "@/domain/money";
 import type { Contact } from "@/domain/types";
+import type { PaginatedList } from "@/lib/use-paginated-list";
 import {
   installHttpAdapter,
   jsonResponse,
@@ -12,38 +13,40 @@ import {
 import { renderWithStore } from "@/test-utils/render-with-store";
 import { goToStep, setAmount, setRecipient } from "@/store/slices/transferSlice";
 import { makeStore } from "@/store/store";
-import { RecipientStep } from "../components/RecipientStep";
+import { RecipientStep, SEARCH_DEBOUNCE_MS } from "../components/RecipientStep";
 
 const useContactsMock = vi.hoisted(() => vi.fn());
 vi.mock("../hooks/useContacts", () => ({ useContacts: useContactsMock }));
 
 const balanceCents = asCents(100_000);
 const refetch = vi.fn();
+const loadMore = vi.fn();
 
+// What the server returns: favorites first, then by name.
 const contacts: Contact[] = [
+  { id: "contact-1", name: "Ana García", phoneOrEmail: "ana.garcia@example.com", isFavorite: true },
+  { id: "contact-2", name: "Luis Hernández", phoneOrEmail: "5512345678", isFavorite: true },
+  { id: "contact-3", name: "María López", phoneOrEmail: "5598765432", isFavorite: true },
   {
     id: "contact-4",
     name: "Carlos Ruiz",
     phoneOrEmail: "carlos.ruiz@example.com",
     isFavorite: false,
   },
-  { id: "contact-3", name: "María López", phoneOrEmail: "5598765432", isFavorite: true },
-  { id: "contact-1", name: "Ana García", phoneOrEmail: "ana.garcia@example.com", isFavorite: true },
-  { id: "contact-2", name: "Luis Hernández", phoneOrEmail: "5512345678", isFavorite: true },
 ];
 
-function mockContacts(state: {
-  contacts?: Contact[] | null;
-  isLoading?: boolean;
-  error?: { code: string; message: string } | null;
-}) {
+function mockContacts(state: Partial<PaginatedList<Contact>>) {
   useContactsMock.mockReturnValue({
-    contacts: contacts,
+    items: contacts,
     isLoading: false,
+    isLoadingMore: false,
     error: null,
+    loadMoreError: null,
+    hasMore: false,
+    loadMore,
     refetch,
     ...state,
-  });
+  } satisfies PaginatedList<Contact>);
 }
 
 // A store that already completed the amount step, like a real user reaching this step.
@@ -54,8 +57,18 @@ function storeAtRecipientStep() {
   return store;
 }
 
+function renderStep(store = storeAtRecipientStep(), scenario?: "large") {
+  return renderWithStore(<RecipientStep balanceCents={balanceCents} scenario={scenario} />, store);
+}
+
 function radioNames(): string[] {
   return screen.getAllByRole("radio").map((radio) => radio.closest("label")?.textContent ?? "");
+}
+
+// Every query the component asked useContacts for, in order and without repeats.
+function searchedQueries(): string[] {
+  const queries = useContactsMock.mock.calls.map((call) => String(call[0]));
+  return queries.filter((query, index) => index === 0 || query !== queries[index - 1]);
 }
 
 describe("RecipientStep", () => {
@@ -63,6 +76,7 @@ describe("RecipientStep", () => {
 
   beforeEach(() => {
     refetch.mockReset();
+    loadMore.mockReset();
     useContactsMock.mockReset();
     mockContacts({});
   });
@@ -70,11 +84,13 @@ describe("RecipientStep", () => {
   afterEach(() => {
     restoreAdapter();
     restoreAdapter = () => {};
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
   describe("contact list", () => {
-    it("shows favorites first, then the rest, each sorted by name", () => {
-      renderWithStore(<RecipientStep balanceCents={balanceCents} />, storeAtRecipientStep());
+    it("shows the contacts in the order the server sent them: favorites first", () => {
+      renderStep();
 
       const names = radioNames();
       expect(names[0]).toContain("Ana García");
@@ -84,7 +100,7 @@ describe("RecipientStep", () => {
     });
 
     it("groups the contacts under Favorites and All contacts", () => {
-      renderWithStore(<RecipientStep balanceCents={balanceCents} />, storeAtRecipientStep());
+      renderStep();
 
       const favorites = screen.getByRole("group", { name: "Favorites" });
       const others = screen.getByRole("group", { name: "All contacts" });
@@ -93,54 +109,161 @@ describe("RecipientStep", () => {
     });
 
     it("hides the All contacts group when every contact is a favorite", () => {
-      mockContacts({ contacts: contacts.filter((contact) => contact.isFavorite) });
-      renderWithStore(<RecipientStep balanceCents={balanceCents} />, storeAtRecipientStep());
+      mockContacts({ items: contacts.filter((contact) => contact.isFavorite) });
+      renderStep();
 
       expect(screen.queryByRole("group", { name: "All contacts" })).not.toBeInTheDocument();
     });
+
+    it("asks for the first page with an empty search", () => {
+      renderStep();
+      expect(useContactsMock).toHaveBeenCalledWith("", undefined);
+    });
+
+    it("passes the scenario to the hook", () => {
+      renderStep(undefined, "large");
+      expect(useContactsMock).toHaveBeenCalledWith("", "large");
+    });
   });
 
-  describe("search", () => {
-    it("filters by name ignoring accents", async () => {
-      renderWithStore(<RecipientStep balanceCents={balanceCents} />, storeAtRecipientStep());
-      await userEvent.type(screen.getByLabelText("Search contacts"), "garcia");
+  describe("pagination", () => {
+    it("shows Load more when there are more pages and asks for the next one", async () => {
+      mockContacts({ hasMore: true });
+      renderStep();
 
-      expect(screen.getAllByRole("radio")).toHaveLength(1);
-      expect(screen.getByRole("radio", { name: /Ana García/ })).toBeInTheDocument();
+      await userEvent.click(screen.getByRole("button", { name: "Load more" }));
+      expect(loadMore).toHaveBeenCalledTimes(1);
     });
 
-    it("filters by phone or email", async () => {
-      renderWithStore(<RecipientStep balanceCents={balanceCents} />, storeAtRecipientStep());
-      await userEvent.type(screen.getByLabelText("Search contacts"), "5598");
-
-      expect(screen.getAllByRole("radio")).toHaveLength(1);
-      expect(screen.getByRole("radio", { name: /María López/ })).toBeInTheDocument();
+    it("does not show Load more on the last page", () => {
+      renderStep();
+      expect(screen.queryByRole("button", { name: "Load more" })).not.toBeInTheDocument();
     });
 
-    it("shows a message when nothing matches", async () => {
-      renderWithStore(<RecipientStep balanceCents={balanceCents} />, storeAtRecipientStep());
-      await userEvent.type(screen.getByLabelText("Search contacts"), "zzz");
+    it("disables Load more while the next page loads", () => {
+      mockContacts({ hasMore: true, isLoadingMore: true });
+      renderStep();
 
-      expect(screen.queryByRole("radio")).not.toBeInTheDocument();
-      expect(screen.getByText(/No contacts match/)).toHaveTextContent("zzz");
+      const button = screen.getByRole("button", { name: "Load more" });
+      expect(button).toBeDisabled();
+      expect(button).toHaveAttribute("aria-busy", "true");
     });
 
-    it("restores the list when the search is cleared", async () => {
-      renderWithStore(<RecipientStep balanceCents={balanceCents} />, storeAtRecipientStep());
-      const search = screen.getByLabelText("Search contacts");
-      await userEvent.type(search, "zzz");
-      await userEvent.clear(search);
+    it("shows the error of a failed page and keeps the contacts and the button", () => {
+      mockContacts({
+        hasMore: true,
+        loadMoreError: { code: "NETWORK_ERROR", message: "We couldn't reach the server." },
+      });
+      renderStep();
 
+      expect(screen.getByRole("alert")).toHaveTextContent("We couldn't reach the server.");
       expect(screen.getAllByRole("radio")).toHaveLength(4);
+      expect(screen.getByRole("button", { name: "Load more" })).toBeEnabled();
+    });
+  });
+
+  describe("search (debounced, on the server)", () => {
+    // Fake timers only here: the debounce is about time.
+    function setupUser() {
+      vi.useFakeTimers();
+      // Testing Library only knows how to wait with fake timers when it finds a `jest` global
+      // (it would otherwise wait for a real timer that never fires). This is that minimum.
+      vi.stubGlobal("jest", { advanceTimersByTime: (ms: number) => vi.advanceTimersByTime(ms) });
+      // delay: null types without waiting between keys: fast typing.
+      return userEvent.setup({ delay: null });
+    }
+
+    it("shows what the user types right away", async () => {
+      const user = setupUser();
+      renderStep();
+
+      await user.type(screen.getByLabelText("Search contacts"), "garcia");
+      expect(screen.getByLabelText("Search contacts")).toHaveValue("garcia");
+    });
+
+    it("does not search while the user is typing", async () => {
+      const user = setupUser();
+      renderStep();
+
+      await user.type(screen.getByLabelText("Search contacts"), "garcia");
+      act(() => {
+        vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS - 1);
+      });
+
+      expect(searchedQueries()).toEqual([""]);
+    });
+
+    it("searches once, with the final text, after the user stops typing", async () => {
+      const user = setupUser();
+      renderStep();
+
+      await user.type(screen.getByLabelText("Search contacts"), "garcia");
+      act(() => {
+        vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS);
+      });
+
+      expect(searchedQueries()).toEqual(["", "garcia"]);
+    });
+
+    it("sends a new search when the user types again after a pause", async () => {
+      const user = setupUser();
+      renderStep();
+      const input = screen.getByLabelText("Search contacts");
+
+      await user.type(input, "ana");
+      act(() => {
+        vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS);
+      });
+      await user.clear(input);
+      await user.type(input, "luis");
+      act(() => {
+        vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS);
+      });
+
+      // Clearing the box and typing "luis" without a pause never searches for the empty text.
+      expect(searchedQueries()).toEqual(["", "ana", "luis"]);
+    });
+
+    it("shows Searching… while waiting for the debounce and hides it afterwards", async () => {
+      const user = setupUser();
+      renderStep();
+      expect(screen.queryByText("Searching…")).not.toBeInTheDocument();
+
+      await user.type(screen.getByLabelText("Search contacts"), "ana");
+      expect(screen.getByText("Searching…")).toBeInTheDocument();
+
+      act(() => {
+        vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS);
+      });
+      expect(screen.queryByText("Searching…")).not.toBeInTheDocument();
+    });
+
+    it("shows Searching… and keeps the current results while the request runs", () => {
+      mockContacts({ isLoading: true });
+      renderStep();
+
+      expect(screen.getByText("Searching…")).toBeInTheDocument();
+      expect(screen.getAllByRole("radio")).toHaveLength(4);
+    });
+
+    it("says nothing matched, with the searched text, when the server returns no contacts", async () => {
+      const user = setupUser();
+      mockContacts({ items: [] });
+      renderStep();
+
+      await user.type(screen.getByLabelText("Search contacts"), "zzz");
+      act(() => {
+        vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS);
+      });
+
+      expect(screen.getByText(/No contacts match/)).toHaveTextContent("zzz");
+      expect(screen.queryByText("No contacts yet")).not.toBeInTheDocument();
     });
   });
 
   describe("selection", () => {
     it("selects a contact and stores its name as the recipient", async () => {
-      const { store } = renderWithStore(
-        <RecipientStep balanceCents={balanceCents} />,
-        storeAtRecipientStep(),
-      );
+      const { store } = renderStep();
       await userEvent.click(screen.getByRole("radio", { name: /Ana García/ }));
 
       expect(store.getState().transfer.recipient).toBe("Ana García");
@@ -149,10 +272,7 @@ describe("RecipientStep", () => {
     });
 
     it("changes the selection", async () => {
-      const { store } = renderWithStore(
-        <RecipientStep balanceCents={balanceCents} />,
-        storeAtRecipientStep(),
-      );
+      const { store } = renderStep();
       await userEvent.click(screen.getByRole("radio", { name: /Ana García/ }));
       await userEvent.click(screen.getByRole("radio", { name: /Carlos Ruiz/ }));
 
@@ -163,7 +283,7 @@ describe("RecipientStep", () => {
     it("shows an already selected recipient (coming back to the step)", () => {
       const store = storeAtRecipientStep();
       store.dispatch(setRecipient("Luis Hernández"));
-      renderWithStore(<RecipientStep balanceCents={balanceCents} />, store);
+      renderStep(store);
 
       expect(screen.getByRole("radio", { name: /Luis Hernández/ })).toBeChecked();
     });
@@ -176,11 +296,8 @@ describe("RecipientStep", () => {
       ];
 
       it("selects only the one the user clicked", async () => {
-        mockContacts({ contacts: sameName });
-        const { store } = renderWithStore(
-          <RecipientStep balanceCents={balanceCents} />,
-          storeAtRecipientStep(),
-        );
+        mockContacts({ items: sameName });
+        const { store } = renderStep();
 
         await userEvent.click(screen.getByRole("radio", { name: /5511110000/ }));
 
@@ -191,8 +308,8 @@ describe("RecipientStep", () => {
       });
 
       it("moves the selection to another contact with the same name", async () => {
-        mockContacts({ contacts: sameName });
-        renderWithStore(<RecipientStep balanceCents={balanceCents} />, storeAtRecipientStep());
+        mockContacts({ items: sameName });
+        renderStep();
 
         await userEvent.click(screen.getByRole("radio", { name: /5511110000/ }));
         await userEvent.click(screen.getByRole("radio", { name: /5522220000/ }));
@@ -202,14 +319,15 @@ describe("RecipientStep", () => {
       });
 
       it("shows the first match as selected when coming back to the step", () => {
-        mockContacts({ contacts: sameName });
+        mockContacts({ items: sameName });
         const store = storeAtRecipientStep();
         store.dispatch(setRecipient("Sam Lee"));
-        renderWithStore(<RecipientStep balanceCents={balanceCents} />, store);
+        renderStep(store);
 
-        expect(
-          screen.getAllByRole("radio").filter((radio) => (radio as HTMLInputElement).checked),
-        ).toHaveLength(1);
+        const checked = screen
+          .getAllByRole("radio")
+          .filter((radio) => (radio as HTMLInputElement).checked);
+        expect(checked).toHaveLength(1);
         expect(screen.getByRole("radio", { name: /5511110000/ })).toBeChecked();
       });
     });
@@ -217,10 +335,7 @@ describe("RecipientStep", () => {
 
   describe("Continue", () => {
     it("asks for a recipient when none is selected", async () => {
-      const { store } = renderWithStore(
-        <RecipientStep balanceCents={balanceCents} />,
-        storeAtRecipientStep(),
-      );
+      const { store } = renderStep();
       await userEvent.click(screen.getByRole("button", { name: "Continue" }));
 
       expect(screen.getByRole("alert")).toHaveTextContent("Choose a recipient.");
@@ -228,15 +343,12 @@ describe("RecipientStep", () => {
     });
 
     it("does not show the error before Continue is pressed", () => {
-      renderWithStore(<RecipientStep balanceCents={balanceCents} />, storeAtRecipientStep());
+      renderStep();
       expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     });
 
     it("goes to the summary with a recipient", async () => {
-      const { store } = renderWithStore(
-        <RecipientStep balanceCents={balanceCents} />,
-        storeAtRecipientStep(),
-      );
+      const { store } = renderStep();
       await userEvent.click(screen.getByRole("radio", { name: /Ana García/ }));
       await userEvent.click(screen.getByRole("button", { name: "Continue" }));
 
@@ -246,24 +358,17 @@ describe("RecipientStep", () => {
   });
 
   describe("states", () => {
-    it("shows a loading state while the contacts load", () => {
-      mockContacts({ contacts: null, isLoading: true });
-      renderWithStore(<RecipientStep balanceCents={balanceCents} />, storeAtRecipientStep());
+    it("shows a loading state while the first page loads", () => {
+      mockContacts({ items: [], isLoading: true });
+      renderStep();
 
       expect(screen.getByRole("status")).toHaveTextContent("Loading contacts");
       expect(screen.queryByRole("radio")).not.toBeInTheDocument();
     });
 
-    it("keeps showing the list while contacts are reloading", () => {
-      mockContacts({ isLoading: true });
-      renderWithStore(<RecipientStep balanceCents={balanceCents} />, storeAtRecipientStep());
-
-      expect(screen.getAllByRole("radio")).toHaveLength(4);
-    });
-
     it("shows an empty state when there are no contacts", () => {
-      mockContacts({ contacts: [] });
-      renderWithStore(<RecipientStep balanceCents={balanceCents} />, storeAtRecipientStep());
+      mockContacts({ items: [] });
+      renderStep();
 
       expect(screen.getByText("No contacts yet")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "New contact" })).toBeInTheDocument();
@@ -271,10 +376,10 @@ describe("RecipientStep", () => {
 
     it("shows an error with a retry button", async () => {
       mockContacts({
-        contacts: null,
+        items: [],
         error: { code: "NETWORK_ERROR", message: "We couldn't reach the server." },
       });
-      renderWithStore(<RecipientStep balanceCents={balanceCents} />, storeAtRecipientStep());
+      renderStep();
 
       expect(screen.getByRole("alert")).toHaveTextContent("We couldn't load your contacts");
       await userEvent.click(screen.getByRole("button", { name: "Try again" }));
@@ -283,18 +388,20 @@ describe("RecipientStep", () => {
 
     it("lets the user add a contact even when the list failed to load", () => {
       mockContacts({
-        contacts: null,
+        items: [],
         error: { code: "NETWORK_ERROR", message: "We couldn't reach the server." },
       });
-      renderWithStore(<RecipientStep balanceCents={balanceCents} />, storeAtRecipientStep());
+      renderStep();
 
       expect(screen.getByRole("button", { name: "New contact" })).toBeInTheDocument();
     });
   });
 
   describe("new contact", () => {
+    // The form is loaded on demand (next/dynamic), so it appears a moment after the click.
     async function openForm() {
       await userEvent.click(screen.getByRole("button", { name: "New contact" }));
+      await screen.findByRole("heading", { name: "New contact" });
     }
 
     async function fillForm(name: string, phoneOrEmail: string) {
@@ -303,9 +410,8 @@ describe("RecipientStep", () => {
     }
 
     it("opens and closes the form", async () => {
-      renderWithStore(<RecipientStep balanceCents={balanceCents} />, storeAtRecipientStep());
+      renderStep();
       await openForm();
-      expect(screen.getByRole("heading", { name: "New contact" })).toBeInTheDocument();
 
       await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
       expect(screen.queryByRole("heading", { name: "New contact" })).not.toBeInTheDocument();
@@ -324,10 +430,7 @@ describe("RecipientStep", () => {
           },
         });
       });
-      const { store } = renderWithStore(
-        <RecipientStep balanceCents={balanceCents} />,
-        storeAtRecipientStep(),
-      );
+      const { store } = renderStep();
 
       await openForm();
       await fillForm("Pedro Sol", "5511112222");
@@ -360,7 +463,7 @@ describe("RecipientStep", () => {
           },
         });
       });
-      renderWithStore(<RecipientStep balanceCents={balanceCents} />, storeAtRecipientStep());
+      renderStep();
 
       await openForm();
       await fillForm("Pedro Sol", "pedro@example.com");
@@ -379,7 +482,7 @@ describe("RecipientStep", () => {
         requestCount += 1;
         return jsonResponse(config, 201, {});
       });
-      renderWithStore(<RecipientStep balanceCents={balanceCents} />, storeAtRecipientStep());
+      renderStep();
 
       await openForm();
       await userEvent.click(screen.getByRole("button", { name: "Save contact" }));
@@ -391,7 +494,7 @@ describe("RecipientStep", () => {
     });
 
     it("rejects an invalid phone or email on blur", async () => {
-      renderWithStore(<RecipientStep balanceCents={balanceCents} />, storeAtRecipientStep());
+      renderStep();
 
       await openForm();
       await userEvent.type(screen.getByLabelText("Email or phone"), "123");
@@ -411,10 +514,7 @@ describe("RecipientStep", () => {
           },
         }),
       );
-      const { store } = renderWithStore(
-        <RecipientStep balanceCents={balanceCents} />,
-        storeAtRecipientStep(),
-      );
+      const { store } = renderStep();
 
       await openForm();
       await fillForm("Another Luis", "5512345678");
@@ -429,7 +529,7 @@ describe("RecipientStep", () => {
 
     it("shows a network error and lets the user retry", async () => {
       restoreAdapter = installHttpAdapter((config) => networkError(config));
-      renderWithStore(<RecipientStep balanceCents={balanceCents} />, storeAtRecipientStep());
+      renderStep();
 
       await openForm();
       await fillForm("Pedro Sol", "5511112222");
