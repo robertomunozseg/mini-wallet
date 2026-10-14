@@ -4,7 +4,7 @@ import { sortMovements } from "@/domain/movements";
 import type { Result } from "@/domain/result";
 import type { Cents, Contact, Movement, Receipt, User } from "@/domain/types";
 
-export type StoredOutcome = Result<Receipt, ApiError>;
+type StoredOutcome = Result<Receipt, ApiError>;
 
 type StoredEntry = { outcome: StoredOutcome; storedAt: number };
 

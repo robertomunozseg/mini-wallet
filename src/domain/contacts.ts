@@ -16,7 +16,7 @@ export function filterContacts(contacts: readonly Contact[], query: string): Con
 }
 
 // What a contact is sorted by. Pagination cursors store it, so it must be plain data.
-export type ContactKey = { isFavorite: boolean; name: string; id: string };
+type ContactKey = { isFavorite: boolean; name: string; id: string };
 
 export function contactKey(contact: Contact): ContactKey {
   return { isFavorite: contact.isFavorite, name: normalize(contact.name), id: contact.id };

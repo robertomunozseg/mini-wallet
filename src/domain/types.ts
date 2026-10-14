@@ -12,7 +12,7 @@ export type Account = {
   balanceCents: Cents;
 };
 
-export type MovementType = "incoming" | "outgoing";
+type MovementType = "incoming" | "outgoing";
 export type MovementStatus = "completed" | "pending" | "failed";
 
 export type Movement = {
@@ -31,13 +31,7 @@ export type Contact = {
   isFavorite: boolean;
 };
 
-// Transfer form state kept in the UI. amountCents is null while the typed text is not a valid amount.
-export type TransferDraft = {
-  recipient: string;
-  amountCents: Cents | null;
-};
-
-export type TransactionStatus = "completed" | "failed";
+type TransactionStatus = "completed" | "failed";
 
 export type Transaction = {
   id: string;
