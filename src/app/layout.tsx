@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Mini Wallet",
+  title: { default: "Mini Wallet", template: "%s | Mini Wallet" },
   description: "A simple wallet to send money",
 };
 

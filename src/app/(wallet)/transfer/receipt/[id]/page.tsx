@@ -1,7 +1,10 @@
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { ReceiptView } from "@/features/transfer/components/ReceiptView";
 import { getReceipt } from "@/server/services/receiptService";
 import { getSession } from "@/server/session";
+
+export const metadata: Metadata = { title: "Receipt" };
 
 export default async function ReceiptPage({ params }: PageProps<"/transfer/receipt/[id]">) {
   // Reading the session makes the page dynamic: a receipt is created at runtime, not at build.
@@ -13,7 +16,7 @@ export default async function ReceiptPage({ params }: PageProps<"/transfer/recei
   if (!receipt) notFound();
 
   return (
-    <main className="mx-auto w-full max-w-xl">
+    <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-xl focus:outline-none">
       <h1 className="mb-4 text-2xl font-semibold text-zinc-900">Receipt</h1>
       <ReceiptView receipt={receipt} />
     </main>
