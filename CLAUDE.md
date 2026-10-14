@@ -10,7 +10,7 @@ El autor será entrevistado sobre este código y modificará partes en vivo: **p
 - Responde al usuario en **español**.
 - Código, nombres de archivos, variables, tipos y mensajes de commit: **inglés**.
 - Textos visibles en la UI: **Ingles**.
-- README.md, DECISIONS.md, AI_USAGE.md: **español**.
+- README.md y DECISIONS.md: **inglés**. AI_USAGE.md: **español**.
 
 ## Stack (no cambiar sin preguntar)
 - Next.js App Router, TypeScript `strict` + `noUncheckedIndexedAccess`
