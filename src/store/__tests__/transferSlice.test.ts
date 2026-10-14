@@ -1,19 +1,17 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { ApiError } from "@/domain/errors";
 import { asCents } from "@/domain/money";
-import type { Receipt } from "@/domain/types";
 import reducer, {
-  confirmFailed,
-  confirmSucceeded,
+  editAmount,
   goToStep,
   reset,
+  selectDemoScenario,
   selectIdempotencyKey,
-  selectLastResult,
   selectRecipient,
   selectTransferDraft,
   selectTransferStep,
   selectTransferValidation,
   setAmount,
+  setDemoScenario,
   setRecipient,
   startConfirm,
   type TransferState,
@@ -21,18 +19,6 @@ import reducer, {
 import { makeStore } from "../store";
 
 const initial = reducer(undefined, { type: "@@init" });
-
-const receipt: Receipt = {
-  transaction: {
-    id: "tx-1",
-    amountCents: asCents(5_000),
-    recipient: "Ana",
-    createdAt: "2026-10-14T12:00:00.000Z",
-    status: "completed",
-  },
-  newBalanceCents: asCents(95_000),
-};
-const apiError: ApiError = { code: "TIMEOUT", message: "The request took too long." };
 
 function withState(overrides: Partial<TransferState>): TransferState {
   return { ...initial, ...overrides };
@@ -49,7 +35,7 @@ describe("transferSlice reducer", () => {
       amountCents: null,
       recipient: "",
       idempotencyKey: null,
-      lastResult: null,
+      demoScenario: "random",
     });
   });
 
@@ -90,14 +76,6 @@ describe("transferSlice reducer", () => {
       expect(state.idempotencyKey).toBe("key-1");
     });
 
-    it("clears the previous result", () => {
-      const state = reducer(
-        withState({ lastResult: { status: "error", error: apiError } }),
-        startConfirm(),
-      );
-      expect(state.lastResult).toBeNull();
-    });
-
     it("generates the key in prepare, not in the reducer", () => {
       const spy = vi.spyOn(crypto, "randomUUID");
       const action = startConfirm();
@@ -108,29 +86,33 @@ describe("transferSlice reducer", () => {
     });
   });
 
-  it("confirmSucceeded stores the receipt and moves to result", () => {
-    const state = reducer(withState({ step: "confirming" }), confirmSucceeded(receipt));
-    expect(state.step).toBe("result");
-    expect(state.lastResult).toEqual({ status: "success", receipt });
+  describe("editAmount", () => {
+    it("goes back to the amount step and invalidates the idempotency key", () => {
+      const state = reducer(
+        withState({ step: "confirming", idempotencyKey: "key-1", amountCents: asCents(5_000) }),
+        editAmount(),
+      );
+      expect(state.step).toBe("amount");
+      expect(state.idempotencyKey).toBeNull();
+      expect(state.amountCents).toBe(5_000);
+    });
   });
 
-  it("confirmFailed stores the error, moves to result and keeps the key", () => {
-    const state = reducer(
-      withState({ step: "confirming", idempotencyKey: "key-1" }),
-      confirmFailed(apiError),
-    );
-    expect(state.step).toBe("result");
-    expect(state.lastResult).toEqual({ status: "error", error: apiError });
-    expect(state.idempotencyKey).toBe("key-1");
+  describe("setDemoScenario", () => {
+    it("stores the scenario and invalidates the key, so the new scenario is not replayed", () => {
+      const state = reducer(withState({ idempotencyKey: "key-1" }), setDemoScenario("timeout"));
+      expect(state.demoScenario).toBe("timeout");
+      expect(state.idempotencyKey).toBeNull();
+    });
   });
 
   it("reset returns to the initial state", () => {
     const dirty = withState({
-      step: "result",
+      step: "confirming",
       amountCents: asCents(5_000),
       recipient: "Ana",
       idempotencyKey: "key-1",
-      lastResult: { status: "success", receipt },
+      demoScenario: "timeout",
     });
     expect(reducer(dirty, reset())).toEqual(initial);
   });
@@ -147,7 +129,7 @@ describe("transferSlice selectors", () => {
     expect(selectTransferStep(state)).toBe("summary");
     expect(selectRecipient(state)).toBe("Ana");
     expect(selectIdempotencyKey(state)).toBeNull();
-    expect(selectLastResult(state)).toBeNull();
+    expect(selectDemoScenario(state)).toBe("random");
   });
 
   it("selectTransferDraft returns the same reference while the draft does not change", () => {

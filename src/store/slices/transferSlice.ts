@@ -1,19 +1,21 @@
 import { createSelector, createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type { ApiError } from "@/domain/errors";
+import type { Scenario } from "@/domain/api";
 import { validateTransfer } from "@/domain/transfer-rules";
-import type { Cents, Receipt, TransferDraft } from "@/domain/types";
+import type { Cents, TransferDraft } from "@/domain/types";
 
-export type TransferStep = "amount" | "recipient" | "summary" | "confirming" | "result";
+// The request itself (processing, error, success) lives in useConfirmTransfer: the store only
+// keeps what must survive between steps.
+export type TransferStep = "amount" | "recipient" | "summary" | "confirming";
 
-export type TransferResult =
-  { status: "success"; receipt: Receipt } | { status: "error"; error: ApiError };
+// Demo mode only: "random" lets the server pick a scenario, any other value forces it.
+export type DemoScenario = Scenario | "random";
 
 export type TransferState = {
   step: TransferStep;
   amountCents: Cents | null;
   recipient: string;
   idempotencyKey: string | null;
-  lastResult: TransferResult | null;
+  demoScenario: DemoScenario;
 };
 
 type StateWithTransfer = { transfer: TransferState };
@@ -23,7 +25,7 @@ const initialState: TransferState = {
   amountCents: null,
   recipient: "",
   idempotencyKey: null,
-  lastResult: null,
+  demoScenario: "random",
 };
 
 const transferSlice = createSlice({
@@ -47,20 +49,21 @@ const transferSlice = createSlice({
     startConfirm: {
       reducer(state, action: PayloadAction<string>) {
         state.idempotencyKey ??= action.payload;
-        state.lastResult = null;
         state.step = "confirming";
       },
       prepare() {
         return { payload: crypto.randomUUID() };
       },
     },
-    confirmSucceeded(state, action: PayloadAction<Receipt>) {
-      state.lastResult = { status: "success", receipt: action.payload };
-      state.step = "result";
+    // "Change amount" after a failed transfer: it is a new intent, so it needs a new key.
+    editAmount(state) {
+      state.step = "amount";
+      state.idempotencyKey = null;
     },
-    confirmFailed(state, action: PayloadAction<ApiError>) {
-      state.lastResult = { status: "error", error: action.payload };
-      state.step = "result";
+    // A stored outcome would be replayed for the same key, so another scenario needs a new key.
+    setDemoScenario(state, action: PayloadAction<DemoScenario>) {
+      state.demoScenario = action.payload;
+      state.idempotencyKey = null;
     },
     reset() {
       return initialState;
@@ -73,8 +76,8 @@ export const {
   setRecipient,
   goToStep,
   startConfirm,
-  confirmSucceeded,
-  confirmFailed,
+  editAmount,
+  setDemoScenario,
   reset,
 } = transferSlice.actions;
 export default transferSlice.reducer;
@@ -83,7 +86,7 @@ export const selectTransferStep = (state: StateWithTransfer) => state.transfer.s
 export const selectAmountCents = (state: StateWithTransfer) => state.transfer.amountCents;
 export const selectRecipient = (state: StateWithTransfer) => state.transfer.recipient;
 export const selectIdempotencyKey = (state: StateWithTransfer) => state.transfer.idempotencyKey;
-export const selectLastResult = (state: StateWithTransfer) => state.transfer.lastResult;
+export const selectDemoScenario = (state: StateWithTransfer) => state.transfer.demoScenario;
 
 export const selectTransferDraft = createSelector(
   [selectAmountCents, selectRecipient],
