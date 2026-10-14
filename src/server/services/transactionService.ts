@@ -2,7 +2,7 @@ import type { ApiError, TransferValidationError } from "@/domain/errors";
 import { err, ok, type Result } from "@/domain/result";
 import type { TransferRequest } from "@/domain/schemas";
 import type { Receipt, Transaction } from "@/domain/types";
-import { validateTransfer } from "@/domain/transfer-rules";
+import { TRANSFER_ERROR_MESSAGES, validateTransfer } from "@/domain/transfer-rules";
 import { apiError } from "../api-error";
 import { addMovement, getBalance, getOutcome, saveOutcome } from "../mock-db";
 import type { Scenario } from "../scenario";
@@ -12,13 +12,6 @@ import { debit } from "./accountService";
 // Long enough for the client to give up first, so the UI timeout state can be exercised.
 export const TIMEOUT_DELAY_MS = 10_000;
 
-const VALIDATION_MESSAGES: Record<TransferValidationError, string> = {
-  AMOUNT_REQUIRED: "Enter an amount.",
-  AMOUNT_NOT_POSITIVE: "The amount must be greater than zero.",
-  INSUFFICIENT_BALANCE: "Insufficient balance.",
-  RECIPIENT_REQUIRED: "Choose a recipient.",
-};
-
 type Deps = {
   sleep: (ms: number) => Promise<void>;
   now: () => Date;
@@ -26,7 +19,7 @@ type Deps = {
 };
 
 function validationFailure(errors: TransferValidationError[]): ApiError {
-  const message = errors.map((error) => VALIDATION_MESSAGES[error]).join(" ");
+  const message = errors.map((error) => TRANSFER_ERROR_MESSAGES[error]).join(" ");
   const code = errors.includes("INSUFFICIENT_BALANCE") ? "INSUFFICIENT_FUNDS" : "VALIDATION_ERROR";
   return apiError(code, message);
 }

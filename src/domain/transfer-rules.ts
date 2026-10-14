@@ -2,6 +2,14 @@ import type { TransferValidationError } from "./errors";
 import { err, ok, type Result } from "./result";
 import type { Cents, ValidTransfer } from "./types";
 
+// Messages for each rule. Shared: the client shows them inline and the server returns them.
+export const TRANSFER_ERROR_MESSAGES: Record<TransferValidationError, string> = {
+  AMOUNT_REQUIRED: "Enter an amount.",
+  AMOUNT_NOT_POSITIVE: "The amount must be greater than zero.",
+  INSUFFICIENT_BALANCE: "Insufficient balance.",
+  RECIPIENT_REQUIRED: "Choose a recipient.",
+};
+
 type TransferInput = {
   // null means the typed text could not be parsed as an amount (see toCents).
   amountCents: Cents | null;
