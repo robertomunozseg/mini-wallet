@@ -35,5 +35,6 @@ Trabajé por fases. En cada una le pedí a Claude un plan, lo revisé y lo aprob
 - Detecté movimientos repetidos de "Ana García" y pedí revisarlos: eran de las pruebas automáticas, no un error de la app.
 - Decidí **no cambiar el servidor de las pruebas** hasta hacer más comprobaciones.
 - Dejé para el final los ajustes de documentación y de despliegue.
+- Pedí una **revisión completa del código** (código muerto, lógica en los componentes, accesibilidad) y autoricé instalar una herramienta de pruebas de accesibilidad.
 
 ## Reflexiones

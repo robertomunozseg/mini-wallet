@@ -89,7 +89,7 @@ All responses use the same error contract: `{ "error": { "code": "...", "message
 | Tailwind CSS                                    | Fast, consistent, responsive styling without custom CSS files                                                              |
 | @tanstack/react-virtual                         | Renders only the visible rows of the movements list, so 10,000 movements stay fast                                         |
 | Vitest + Testing Library                        | Unit and component tests                                                                                                   |
-| Playwright                                      | End-to-end tests of the real flows                                                                                         |
+| Playwright + axe-core                           | End-to-end tests of the real flows, and automatic WCAG 2.1 A/AA accessibility checks of every screen                       |
 
 ## Project structure
 
@@ -115,7 +115,7 @@ Data flows in one direction: `domain` → `server/services` → `app/api` → ho
 ## Tests
 
 - **Unit and component tests** sit next to the code in `__tests__` folders (`npm test`).
-- **End-to-end tests** are in `tests/e2e` (`npm run test:e2e`): login, home, the whole transfer flow up to the receipt, and one test per failure scenario.
+- **End-to-end tests** are in `tests/e2e` (`npm run test:e2e`): login, home, the whole transfer flow up to the receipt, one test per failure scenario, and an accessibility check (axe) of every screen.
 
 ## Known limitations
 

@@ -95,7 +95,17 @@ The transfer rules (amount above zero, amount not above the balance, recipient r
 
 > My reasoning: _why I prepared for millions of users in a mock, and what I measured._
 
-## 10. What I would do differently with more time
+## 10. Accessibility
+
+- Every field has a label; errors use `role="alert"`; icons that only decorate are hidden from screen readers.
+- Every interactive element has a visible focus style, and the whole flow works with the keyboard. A **Skip to content** link is the first Tab stop.
+- Each page has its own title (`Home | Mini Wallet`, `New transfer | Mini Wallet`, ...).
+- Colors are chosen for contrast on white.
+- An automatic check (axe, WCAG 2.1 A and AA) runs on every screen in the end-to-end tests, so a regression fails the build.
+
+> My reasoning: _why I treated accessibility as part of the definition of done, and what the automatic check cannot cover (for example, how it sounds with a screen reader)._
+
+## 11. What I would do differently with more time
 
 - **Real database** instead of in-memory state, with transactions for the debit.
 - **Real authentication** (sessions or tokens per user, password or provider login).
