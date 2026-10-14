@@ -13,7 +13,8 @@ import {
 import { renderWithStore } from "@/test-utils/render-with-store";
 import { goToStep, setAmount, setRecipient } from "@/store/slices/transferSlice";
 import { makeStore } from "@/store/store";
-import { RecipientStep, SEARCH_DEBOUNCE_MS } from "../components/RecipientStep";
+import { RecipientStep } from "../components/RecipientStep";
+import { SEARCH_DEBOUNCE_MS } from "../hooks/useRecipientStep";
 
 const useContactsMock = vi.hoisted(() => vi.fn());
 vi.mock("../hooks/useContacts", () => ({ useContacts: useContactsMock }));
