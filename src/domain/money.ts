@@ -23,6 +23,15 @@ export function fromCents(cents: Cents): number {
   return cents / 100;
 }
 
+// Plain text for an amount input ("1250.50"), e.g. to refill the field when coming back to a step.
+export function centsToInput(cents: Cents): string {
+  return fromCents(cents).toFixed(2);
+}
+
+export function subtractCents(a: Cents, b: Cents): Cents {
+  return asCents(a - b);
+}
+
 export function formatMoney(cents: Cents, currency: "MXN" = "MXN"): string {
   return new Intl.NumberFormat("es-MX", { style: "currency", currency }).format(fromCents(cents));
 }

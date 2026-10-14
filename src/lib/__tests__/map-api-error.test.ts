@@ -53,13 +53,40 @@ describe("mapApiError", () => {
     expect(mapApiError(error).code).toBe(code);
   });
 
-  it("returns a user-facing message, not the server message", () => {
-    const error = httpError(422, {
-      error: { code: "INSUFFICIENT_FUNDS", message: "raw server text" },
+  it.each(["INSUFFICIENT_FUNDS", "INVALID_CREDENTIALS", "UNKNOWN_ERROR", "UNAUTHORIZED"] as const)(
+    "shows a fixed user-facing message for %s, not the server message",
+    (code) => {
+      const mapped = mapApiError(httpError(422, { error: { code, message: "raw server text" } }));
+      expect(mapped.message).not.toBe("raw server text");
+      expect(mapped.message).not.toBe("");
+    },
+  );
+
+  describe("VALIDATION_ERROR", () => {
+    it("shows the server message, which the API writes for the user", () => {
+      const error = httpError(400, {
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "A contact with this phone or email already exists.",
+        },
+      });
+      expect(mapApiError(error)).toEqual({
+        code: "VALIDATION_ERROR",
+        message: "A contact with this phone or email already exists.",
+      });
     });
-    const mapped = mapApiError(error);
-    expect(mapped.message).not.toBe("raw server text");
-    expect(mapped.message).toMatch(/balance/i);
+
+    it.each([
+      ["a missing message", { error: { code: "VALIDATION_ERROR" } }],
+      ["an empty message", { error: { code: "VALIDATION_ERROR", message: "" } }],
+      ["a blank message", { error: { code: "VALIDATION_ERROR", message: "   " } }],
+      ["a non-string message", { error: { code: "VALIDATION_ERROR", message: 42 } }],
+    ])("falls back to the generic text with %s", (_name, body) => {
+      expect(mapApiError(httpError(400, body))).toEqual({
+        code: "VALIDATION_ERROR",
+        message: "Some of the information you entered is not valid.",
+      });
+    });
   });
 
   it.each([

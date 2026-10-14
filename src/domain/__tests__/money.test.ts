@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { asCents, formatMoney, fromCents, toCents } from "../money";
+import { asCents, centsToInput, formatMoney, fromCents, subtractCents, toCents } from "../money";
 
 describe("toCents", () => {
   it.each([
@@ -59,5 +59,33 @@ describe("formatMoney", () => {
 
   it("formats zero", () => {
     expect(formatMoney(asCents(0))).toBe("$0.00");
+  });
+});
+
+describe("centsToInput", () => {
+  it.each([
+    [125050, "1250.50"],
+    [100, "1.00"],
+    [5, "0.05"],
+    [0, "0.00"],
+    [115, "1.15"],
+  ])("converts %i cents to %j", (cents, expected) => {
+    expect(centsToInput(asCents(cents))).toBe(expected);
+  });
+
+  it("round-trips with toCents", () => {
+    for (const cents of [1, 99, 100, 115, 125050, 99_999_999]) {
+      expect(toCents(centsToInput(asCents(cents)))).toBe(cents);
+    }
+  });
+});
+
+describe("subtractCents", () => {
+  it("subtracts amounts", () => {
+    expect(subtractCents(asCents(100_000), asCents(5_000))).toBe(95_000);
+  });
+
+  it("allows reaching exactly zero", () => {
+    expect(subtractCents(asCents(5_000), asCents(5_000))).toBe(0);
   });
 });

@@ -95,6 +95,18 @@ Fase 5 (Home). Primero plan.
 Para probar vacío/error en dev permite ?scenario=empty|error en la URL de la página, reenviado como header x-mock-scenario.
 ```
 
+#### Fase 6 — Flujo de transferencia (sin confirmar)
+
+```text
+Fase 6 (flujo de transferencia, sin confirmar todavía). Primero plan.
+1. app/(wallet)/transfer/page.tsx: Client Component que renderiza el paso según transferSlice.step, con indicador de pasos y botón "Atrás". Necesita el saldo: recíbelo del Server Component padre como prop.
+2. AmountStep: input de monto con toCents, saldo disponible visible, errores inline AMOUNT_NOT_POSITIVE e INSUFFICIENT_BALANCE usando validateTransfer (mismas reglas que el servidor).
+3. RecipientStep: favoritos primero (useContacts con useAxios GET /contacts), buscar en la lista, y "Nuevo contacto" con formulario (newContactSchema) que hace POST /contacts, muestra el contacto nuevo seleccionado y maneja errores. Estados de carga/vacío/error.
+4. SummaryStep: monto, destinatario, saldo después de la transferencia; botón Confirmar deshabilitado si validateTransfer falla (RECIPIENT_REQUIRED, etc.).
+5. Al salir del flujo o al terminar → dispatch(reset()).
+6. Tests: AmountStep (reglas), RecipientStep (selección y alta de contacto), SummaryStep (botón deshabilitado sin destinatario).
+```
+
 ## Qué se revisó y corrigió manualmente
 
 ### Cambios que pedí respecto a lo propuesto o a mis prompts
@@ -107,5 +119,8 @@ Cada punto indica qué pedí cambiar y por qué. Cuando la razón la propuso Cla
 | 4 | `login/page.tsx` como **Server Component** que renderiza `LoginForm` (mi prompt decía Client Component). | Razón propuesta por Claude y aceptada: el comportamiento es el mismo y así la página puede exportar `metadata` (título "Sign in"). `LoginForm` sigue siendo Client Component. |
 | 5 | `?scenario=empty\|error` habilitado en **todos los entornos**, no solo en dev (mi prompt decía "en dev"). | Pregunté cómo dejarlo para Vercel. Razón propuesta por Claude y aceptada: el header `x-mock-scenario` ya funciona contra la API en cualquier entorno y solo acepta `empty` y `error`, así quien revise el deploy puede ver esos estados. |
 | 5 (ajuste posterior) | Home en **dos columnas desde 768 px** (`md`) en vez de 1024 px (`lg`). | Pregunté si la app funcionaba en tablets. Claude observó que en tablets en vertical la tarjeta de saldo se estiraba a todo el ancho con mucho espacio vacío, y pedí ajustarlo. Verificado a 768, 820 y 1024 px: sin scroll horizontal y con un saldo muy grande (`$99,999,999.99`) cabe en la columna más angosta. |
+| 6 | `transfer/page.tsx` como **Server Component** que lee el saldo y renderiza `TransferFlow` (mi prompt decía Client Component que recibe el saldo del padre). | Razón propuesta por Claude y aceptada: un `page.tsx` de cliente no puede recibir props de su padre, y leer el saldo requiere el servidor. Mismo patrón que el login. |
+| 6 | El botón **Confirm** del resumen llama a `startConfirm()` y muestra un aviso temporal, en vez de quedar deshabilitado o sin efecto. | Razón propuesta por Claude y aceptada: un botón habilitado que no hace nada confunde, y deshabilitado siempre impediría probar el camino feliz. La Fase 7 reemplaza el aviso. |
+| 6 | `mapApiError` muestra el **mensaje del servidor** cuando el código es `VALIDATION_ERROR` (en la Fase 3 nunca se mostraba). | Razón propuesta por Claude y aceptada: sin esto, un contacto duplicado mostraría el texto genérico "Some of the information you entered is not valid." y el usuario no sabría qué corregir. El resto de códigos sigue con texto fijo. |
 
 ## Reflexiones
