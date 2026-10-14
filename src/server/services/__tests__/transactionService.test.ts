@@ -1,9 +1,13 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { asCents } from "@/domain/money";
 import { getBalance, listMovements, resetDb } from "../../mock-db";
-import { createTransactionService, TIMEOUT_DELAY_MS } from "../transactionService";
+import { createTransactionService, TIMEOUT_DELAY_MS, timeoutDelayMs } from "../transactionService";
 
 const SEEDED_BALANCE = 1_250_000;
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 function setup() {
   const sleep = vi.fn<(ms: number) => Promise<void>>().mockResolvedValue(undefined);
@@ -113,6 +117,14 @@ describe("transactionService.create", () => {
       expect(getBalance()).toBe(SEEDED_BALANCE);
     });
 
+    it("timeout waits MOCK_TIMEOUT_DELAY_MS when it is set (used by the e2e tests)", async () => {
+      vi.stubEnv("MOCK_TIMEOUT_DELAY_MS", "300");
+      const { service, sleep } = setup();
+      const result = await service.create(transfer(1_000), "key-1", "timeout");
+      expect(sleep).toHaveBeenCalledWith(300);
+      expect(result).toMatchObject({ ok: false, error: { code: "TIMEOUT" } });
+    });
+
     it("unknown_error fails with UNKNOWN_ERROR", async () => {
       const { service } = setup();
       const result = await service.create(transfer(1_000), "key-1", "unknown_error");
@@ -177,5 +189,19 @@ describe("transactionService.create", () => {
       const fixed = await service.create(transfer(1_000), "key-1", "success");
       expect(fixed.ok).toBe(true);
     });
+  });
+});
+
+describe("timeoutDelayMs", () => {
+  it("is 10 seconds by default", () => {
+    expect(timeoutDelayMs(undefined)).toBe(10_000);
+  });
+
+  it("uses a positive whole number", () => {
+    expect(timeoutDelayMs("300")).toBe(300);
+  });
+
+  it.each(["", "abc", "0", "-5", "1.5", "NaN", "Infinity"])("ignores %j", (value) => {
+    expect(timeoutDelayMs(value)).toBe(10_000);
   });
 });

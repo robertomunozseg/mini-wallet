@@ -12,6 +12,13 @@ import { debit } from "./accountService";
 // Long enough for the client to give up first, so the UI timeout state can be exercised.
 export const TIMEOUT_DELAY_MS = 10_000;
 
+// Tests can shorten the wait with MOCK_TIMEOUT_DELAY_MS (server-side only) instead of waiting 10s.
+// Anything that is not a positive whole number falls back to the default.
+export function timeoutDelayMs(configured = process.env.MOCK_TIMEOUT_DELAY_MS): number {
+  const value = Number(configured);
+  return Number.isInteger(value) && value > 0 ? value : TIMEOUT_DELAY_MS;
+}
+
 type Deps = {
   sleep: (ms: number) => Promise<void>;
   now: () => Date;
@@ -63,7 +70,7 @@ export function createTransactionService(overrides: Partial<Deps> = {}) {
       case "network_error":
         return err(apiError("NETWORK_ERROR", "Network error. Please try again."));
       case "timeout":
-        await deps.sleep(TIMEOUT_DELAY_MS);
+        await deps.sleep(timeoutDelayMs());
         return err(apiError("TIMEOUT", "The request timed out. Please try again."));
       case "unknown_error":
         return err(apiError("UNKNOWN_ERROR", "Something went wrong. Please try again."));
