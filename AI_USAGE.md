@@ -107,6 +107,24 @@ Fase 6 (flujo de transferencia, sin confirmar todavía). Primero plan.
 6. Tests: AmountStep (reglas), RecipientStep (selección y alta de contacto), SummaryStep (botón deshabilitado sin destinatario).
 ```
 
+#### Solicitud adicional — Preparar la app para alto volumen
+
+Mensajes que envié a Claude Code después de la Fase 6, tal cual, a partir del contexto del challenge (millones de usuarios activos, escalabilidad y mantenibilidad).
+
+```text
+una duda se puede agregar el uso de debounce en la busqueda de contactos? o duda la lista de contactos vienen de una api? me ha tocado en examenes de React que me piden agregar debounce en el input search, hasta que digamos ya escribio haga la busqueda? es solo duda que me recomiendas
+
+si puedes leer el contexto mencionan lo siguiente -> Contexto: El sistema opera en un entorno de alto volumen con millones de
+usuarios activos. Tus decisiones de diseño deben considerar escalabilidad y
+mantenibilidad.
+
+si me gustaría dejarlo preparado de una vez para millones de usuarios , usar tecnicas de performance, que me sugieres?
+
+1. una sola rama, 2. si 3. si autorizo react-virtual  4. cual me recomiendas?
+
+ok si lo más real que se pueda presentar aunque sea mock pero me servira para el challenge , performance, virtualizacion, hooks usecallback, usememo memo, debounce
+```
+
 ## Qué se revisó y corrigió manualmente
 
 ### Cambios que pedí respecto a lo propuesto o a mis prompts
@@ -122,5 +140,12 @@ Cada punto indica qué pedí cambiar y por qué. Cuando la razón la propuso Cla
 | 6 | `transfer/page.tsx` como **Server Component** que lee el saldo y renderiza `TransferFlow` (mi prompt decía Client Component que recibe el saldo del padre). | Razón propuesta por Claude y aceptada: un `page.tsx` de cliente no puede recibir props de su padre, y leer el saldo requiere el servidor. Mismo patrón que el login. |
 | 6 | El botón **Confirm** del resumen llama a `startConfirm()` y muestra un aviso temporal, en vez de quedar deshabilitado o sin efecto. | Razón propuesta por Claude y aceptada: un botón habilitado que no hace nada confunde, y deshabilitado siempre impediría probar el camino feliz. La Fase 7 reemplaza el aviso. |
 | 6 | `mapApiError` muestra el **mensaje del servidor** cuando el código es `VALIDATION_ERROR` (en la Fase 3 nunca se mostraba). | Razón propuesta por Claude y aceptada: sin esto, un contacto duplicado mostraría el texto genérico "Some of the information you entered is not valid." y el usuario no sabría qué corregir. El resto de códigos sigue con texto fijo. |
+| Extra | La búsqueda de contactos pasa a hacerse en el **servidor, con debounce**, en vez de filtrar en el navegador una lista completa (mi Fase 6 pedía "buscar en la lista"). | Pregunté si convenía un debounce. Claude explicó que con el filtro local no servía de nada, pero que el contexto del challenge (millones de usuarios activos) hace que descargar toda la agenda no escale, así que la búsqueda debe ir al servidor, y ahí el debounce sí tiene sentido. |
+| Extra | **Paginación por cursor** en movimientos y contactos, con "Load more" en contactos y scroll infinito en movimientos (antes `GET /movements` devolvía todo). | Mismo motivo: acotar el tamaño de las respuestas y del DOM. Pedí dejarlo "preparado de una vez" para alto volumen. |
+| Extra | **Virtualización** de la lista de movimientos con `@tanstack/react-virtual`; autoricé instalar esa dependencia. | Quería usar técnicas de rendimiento reales y poder explicarlas en la entrevista. Claude recomendó virtualizar solo movimientos (los contactos son un grupo de radios, y la búsqueda ya acota la lista). |
+| Extra | La **primera página de movimientos se carga en el servidor** (Server Component dentro de `Suspense`) y las demás por API. | Aprobé la propuesta de Claude para quitar la cascada HTML → JS → petición. Cambia el diseño de la Fase 5, donde la lista pedía todo con `useAxios`. |
+| Extra | Uso explícito de `memo`, `useCallback` y `useMemo` donde tienen efecto medible, y carga diferida de `NewContactForm`. | Lo pedí para poder mostrarlo en el challenge. Claude los aplicó solo donde evitan re-renders (filas de lista, opciones de contacto) y lo comprobó con tests que cuentan renders. |
+| Extra | Dataset grande bajo demanda con `x-mock-scenario: large` (10 000 movimientos y 5 000 contactos), en vez de un script aparte. | Pregunté cuál recomendaba. Razón de Claude, aceptada: reutiliza un mecanismo ya probado, funciona también en el deploy de Vercel y es determinista. Solo afecta a las lecturas. |
+| Extra | Memoria de idempotencia acotada (TTL de 24 h y máximo de 10 000 claves) y `Cache-Control: private, no-store` en la API. | Parte del mismo paquete de preparación para alto volumen aprobado en "una sola rama". |
 
 ## Reflexiones
