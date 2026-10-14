@@ -184,9 +184,17 @@ export function RecipientStep({ balanceCents, scenario }: RecipientStepProps) {
         {isSearching ? "Searching…" : ""}
       </p>
 
-      {showForm && <NewContactForm onCreated={handleCreated} onCancel={handleCancelForm} />}
+      {/* Only this area scrolls, so the page itself does not: its height is what is left of the
+          window after the header, the steps and the search box above and the Continue bar below. */}
+      <div
+        role="region"
+        aria-label="Contacts"
+        className="flex max-h-[max(12rem,calc(100dvh-34rem))] flex-col gap-4 overflow-y-auto"
+      >
+        {showForm && <NewContactForm onCreated={handleCreated} onCancel={handleCancelForm} />}
 
-      {renderContacts()}
+        {renderContacts()}
+      </div>
 
       {/* Sticky: Continue stays visible however long the contact list is. */}
       <div className="sticky bottom-0 -mx-4 flex flex-col gap-2 border-t border-zinc-200 bg-white px-4 py-3">
