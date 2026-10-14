@@ -1,22 +1,60 @@
+import { memo } from "react";
 import { formatMoney } from "@/domain/money";
 import { formatRelativeTime } from "@/domain/relative-time";
 import type { Movement, MovementStatus } from "@/domain/types";
 import { classNames } from "@/lib/class-names";
 
-type MovementItemProps = { movement: Movement };
+type MovementItemProps = {
+  movement: Movement;
+  // The props below are set by the virtualized list, which positions every row itself.
+  offsetTop?: number; // distance from the top of the scroll area, in px
+  index?: number;
+  setSize?: number; // total rows, or -1 when more pages are still to be loaded
+  measureRef?: (node: Element | null) => void; // lets the virtualizer measure the real height
+};
 
 const STATUS_LABELS: Record<Exclude<MovementStatus, "completed">, string> = {
   pending: "Pending",
   failed: "Failed",
 };
 
-export function MovementItem({ movement }: MovementItemProps) {
+// memo: while the user scrolls, the list re-renders on every frame, but a row only re-renders
+// when its own props change. The props are primitives and the same `movement` object, so the
+// rows that stay on screen are skipped.
+export const MovementItem = memo(function MovementItem({
+  movement,
+  offsetTop,
+  index,
+  setSize,
+  measureRef,
+}: MovementItemProps) {
   const isIncoming = movement.type === "incoming";
   const isFailed = movement.status === "failed";
   const statusLabel = movement.status === "completed" ? null : STATUS_LABELS[movement.status];
+  const isVirtual = offsetTop !== undefined && index !== undefined;
 
   return (
-    <li className="flex items-center gap-3 py-3">
+    <li
+      ref={measureRef}
+      data-index={index}
+      aria-posinset={isVirtual ? index + 1 : undefined}
+      aria-setsize={isVirtual ? setSize : undefined}
+      style={
+        isVirtual
+          ? {
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              transform: `translateY(${offsetTop}px)`,
+            }
+          : undefined
+      }
+      className={classNames(
+        "flex items-center gap-3 py-3",
+        isVirtual && "border-b border-zinc-100",
+      )}
+    >
       <span
         aria-hidden="true"
         className={classNames(
@@ -72,4 +110,4 @@ export function MovementItem({ movement }: MovementItemProps) {
       </p>
     </li>
   );
-}
+});
