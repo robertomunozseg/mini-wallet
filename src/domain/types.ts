@@ -31,10 +31,10 @@ export type Contact = {
   isFavorite: boolean;
 };
 
-// Transfer form state kept in the UI: raw strings, not validated yet.
+// Transfer form state kept in the UI. amountCents is null while the typed text is not a valid amount.
 export type TransferDraft = {
   recipient: string;
-  amountInput: string;
+  amountCents: Cents | null;
 };
 
 export type TransactionStatus = "completed" | "failed";
