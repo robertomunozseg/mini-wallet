@@ -33,11 +33,27 @@ export async function openTransfer(page: Page) {
   await expect(page).toHaveURL(/\/transfer$/);
 }
 
+// The server sends the page before React takes over the form (hydration). Typing or clicking in
+// that gap is lost, and on a busy machine the gap is long enough to hit. Retrying the whole
+// interaction until its result shows up is what Playwright recommends instead of a fixed wait.
+export async function retryUntilHydrated(interaction: () => Promise<void>) {
+  await expect(interaction).toPass({ timeout: 15_000 });
+}
+
+// Types the amount and continues, retrying until the recipient step appears.
+export async function enterAmount(page: Page, amount: string) {
+  await retryUntilHydrated(async () => {
+    await page.getByLabel("Amount (MXN)").fill(amount);
+    await page.getByRole("button", { name: "Continue" }).click();
+    await expect(page.getByRole("heading", { name: "Who is receiving it?" })).toBeVisible({
+      timeout: 2_000,
+    });
+  });
+}
+
 export async function reachRecipientStep(page: Page, amount = "1") {
   await openTransfer(page);
-  await page.getByLabel("Amount (MXN)").fill(amount);
-  await page.getByRole("button", { name: "Continue" }).click();
-  await expect(page.getByRole("heading", { name: "Who is receiving it?" })).toBeVisible();
+  await enterAmount(page, amount);
 }
 
 export async function reachSummary(page: Page, amount = "1") {
