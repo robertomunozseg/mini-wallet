@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { asCents } from "./money";
+import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from "./pagination";
 
 const MX_PHONE_PATTERN = /^\d{10}$/;
 
@@ -32,6 +33,29 @@ export const transferRequestSchema = z.object({
   recipient: z.string().trim().min(1, "Recipient is required"),
 });
 
+// Query string of the list endpoints. Everything arrives as text, so numbers are coerced.
+const limitSchema = z.coerce
+  .number()
+  .int("limit must be a whole number")
+  .min(1, "limit must be at least 1")
+  .max(MAX_PAGE_SIZE, `limit must be at most ${MAX_PAGE_SIZE}`)
+  .default(DEFAULT_PAGE_SIZE);
+
+const cursorSchema = z.string().max(300, "cursor is too long").optional();
+
+export const contactsQuerySchema = z.object({
+  q: z.string().trim().max(50, "q is too long").optional(),
+  limit: limitSchema,
+  cursor: cursorSchema,
+});
+
+export const movementsQuerySchema = z.object({
+  limit: limitSchema,
+  cursor: cursorSchema,
+});
+
 export type LoginInput = z.infer<typeof loginSchema>;
+export type ContactsQuery = z.infer<typeof contactsQuerySchema>;
+export type MovementsQuery = z.infer<typeof movementsQuerySchema>;
 export type NewContactInput = z.infer<typeof newContactSchema>;
 export type TransferRequest = z.infer<typeof transferRequestSchema>;
