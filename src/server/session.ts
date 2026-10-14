@@ -1,11 +1,8 @@
 import { cookies } from "next/headers";
 import type { User } from "@/domain/types";
 import { getUser } from "./mock-db";
+import { isValidSessionToken, MOCK_SESSION_TOKEN, SESSION_COOKIE } from "./session-token";
 
-export const SESSION_COOKIE = "mw_session";
-
-// Mock: a real app would store a random, per-session token and look it up in a database.
-const MOCK_SESSION_TOKEN = "mock-session-token";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 8;
 
 export type Session = { user: User };
@@ -28,6 +25,6 @@ export async function clearSession(): Promise<void> {
 
 export async function getSession(): Promise<Session | null> {
   const cookieStore = await cookies();
-  if (cookieStore.get(SESSION_COOKIE)?.value !== MOCK_SESSION_TOKEN) return null;
+  if (!isValidSessionToken(cookieStore.get(SESSION_COOKIE)?.value)) return null;
   return { user: getUser() };
 }
