@@ -17,7 +17,7 @@ export function ContactGroup({ title, contacts, selectedId, onSelect }: ContactG
       {contacts.map((contact) => (
         <label
           key={contact.id}
-          className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-zinc-200 bg-white px-3 py-2 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-blue-600"
+          className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-zinc-200 bg-white px-3 py-2 has-checked:border-blue-600 has-checked:bg-blue-50 has-focus-visible:outline-2 has-focus-visible:outline-blue-600"
         >
           <input
             type="radio"
