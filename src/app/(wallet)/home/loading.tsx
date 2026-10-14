@@ -6,7 +6,7 @@ export default function HomeLoading() {
     <div role="status" aria-busy="true">
       <span className="sr-only">Loading your home</span>
       <Skeleton className="mb-4 h-8 w-24" />
-      <div className="grid gap-6 lg:grid-cols-[2fr_3fr] lg:items-start">
+      <div className="grid gap-6 md:grid-cols-[2fr_3fr] md:items-start">
         <Card className="space-y-4">
           <Skeleton className="h-4 w-1/2" />
           <Skeleton className="h-4 w-1/3" />

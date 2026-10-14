@@ -21,7 +21,7 @@ export default async function HomePage({ searchParams }: PageProps<"/home">) {
     <main>
       <SessionHydrator user={session.user} />
       <h1 className="mb-4 text-2xl font-semibold text-zinc-900">Home</h1>
-      <div className="grid gap-6 lg:grid-cols-[2fr_3fr] lg:items-start">
+      <div className="grid gap-6 md:grid-cols-[2fr_3fr] md:items-start">
         <BalanceCard name={session.user.name} balanceCents={account.balanceCents} />
         <MovementsList scenario={movementsScenario ?? undefined} />
       </div>
