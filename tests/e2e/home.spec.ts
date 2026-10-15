@@ -113,6 +113,29 @@ test.describe("home with a large history (?scenario=large)", () => {
     await expect(page.getByRole("listitem").first()).not.toHaveAttribute("aria-posinset", "1");
   });
 
+  test("on a phone the page does not scroll and the list does", async ({ signedIn: page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/home?scenario=large");
+    const region = page.getByRole("region", MOVEMENTS_REGION);
+    await expect(page.getByRole("listitem").first()).toBeVisible();
+
+    // The page is as tall as the window (no page scroll)...
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => document.documentElement.scrollHeight - document.documentElement.clientHeight,
+        ),
+      )
+      .toBeLessThanOrEqual(0);
+    // ...the whole list box is on screen, and the list scrolls inside itself.
+    const box = await region.boundingBox();
+    expect(box).not.toBeNull();
+    expect((box?.y ?? 0) + (box?.height ?? 0)).toBeLessThanOrEqual(844);
+    expect(await region.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(
+      true,
+    );
+  });
+
   test("the scroll area can be reached with the keyboard", async ({ signedIn: page }) => {
     await page.goto("/home?scenario=large");
     const region = page.getByRole("region", MOVEMENTS_REGION);
