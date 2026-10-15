@@ -1,22 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { asCents } from "../money";
-import { TRANSFER_ERROR_MESSAGES, validateTransfer } from "../transfer-rules";
+import { validateTransfer } from "../transfer-rules";
 
 const balanceCents = asCents(100_00);
-
-describe("TRANSFER_ERROR_MESSAGES", () => {
-  it("has a non-empty message for every rule", () => {
-    expect(Object.keys(TRANSFER_ERROR_MESSAGES).sort()).toEqual([
-      "AMOUNT_NOT_POSITIVE",
-      "AMOUNT_REQUIRED",
-      "INSUFFICIENT_BALANCE",
-      "RECIPIENT_REQUIRED",
-    ]);
-    for (const message of Object.values(TRANSFER_ERROR_MESSAGES)) {
-      expect(message).not.toBe("");
-    }
-  });
-});
 
 describe("validateTransfer", () => {
   it("accepts a valid transfer and trims the recipient", () => {

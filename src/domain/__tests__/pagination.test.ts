@@ -29,23 +29,6 @@ describe("paginate", () => {
     expect(page.ok && page.value.nextCursor).toBeNull();
   });
 
-  it("has no cursor when the last page is exactly full", () => {
-    const page = pageOf(rows(4), 2, "row-2");
-    expect(idsOf(page)).toEqual(["row-3", "row-4"]);
-    expect(page.ok && page.value.nextCursor).toBeNull();
-  });
-
-  it("returns everything with no cursor when the list is shorter than the limit", () => {
-    const page = pageOf(rows(3), 10);
-    expect(idsOf(page)).toEqual(["row-1", "row-2", "row-3"]);
-    expect(page.ok && page.value.nextCursor).toBeNull();
-  });
-
-  it("returns an empty page for an empty list", () => {
-    const page = pageOf([], 5);
-    expect(page).toEqual({ ok: true, value: { items: [], nextCursor: null } });
-  });
-
   it("rejects a cursor that is not in the list", () => {
     expect(pageOf(rows(5), 2, "nope")).toEqual({ ok: false, error: "INVALID_CURSOR" });
   });

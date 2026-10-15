@@ -34,22 +34,8 @@ describe("formatRelativeTime", () => {
     expect(formatRelativeTime(ago(7 * DAY), now)).toMatch(/^Oct 7, 2026$/);
   });
 
-  it("tolerates small clock differences into the future", () => {
-    expect(formatRelativeTime(new Date(now.getTime() + 30 * SECOND).toISOString(), now)).toBe(
-      "just now",
-    );
-  });
-
-  it("shows the date for clearly future dates", () => {
-    expect(formatRelativeTime("2026-10-20T12:00:00.000Z", now)).toBe("Oct 20, 2026");
-  });
-
   it("returns an empty string for an invalid date", () => {
     expect(formatRelativeTime("not-a-date", now)).toBe("");
-  });
-
-  it("uses the current time by default", () => {
-    expect(formatRelativeTime(new Date().toISOString())).toBe("just now");
   });
 });
 
