@@ -52,15 +52,15 @@ There are no real accounts. The login accepts:
 
 ## Scripts
 
-| Script                        | What it does                                              |
-| ----------------------------- | --------------------------------------------------------- |
-| `npm run dev`                 | Development server                                        |
-| `npm run build` / `npm start` | Production build and server                               |
-| `npm run lint`                | ESLint                                                    |
-| `npm run typecheck`           | `tsc --noEmit` (strict mode)                              |
-| `npm test`                    | Unit tests with Vitest (watch mode: `npm run test:watch`) |
-| `npm run test:e2e`            | End-to-end tests with Playwright (Chromium)               |
-| `npm run format`              | Prettier                                                  |
+| Script                        | What it does                                                  |
+| ----------------------------- | ------------------------------------------------------------- |
+| `npm run dev`                 | Development server                                            |
+| `npm run build` / `npm start` | Production build and server                                   |
+| `npm run lint`                | ESLint                                                        |
+| `npm run typecheck`           | `next typegen` (route types) and `tsc --noEmit` (strict mode) |
+| `npm test`                    | Unit tests with Vitest (watch mode: `npm run test:watch`)     |
+| `npm run test:e2e`            | End-to-end tests with Playwright (Chromium)                   |
+| `npm run format`              | Prettier                                                      |
 
 Playwright reuses a dev server that is already running on port 3000; transfers made by the tests then end up in that server's data. Stop `npm run dev` first if you want a clean run.
 
@@ -124,6 +124,7 @@ Data flows in one direction: `domain` → `server/services` → `app/api` → ho
 - **One user.** Every receipt belongs to the demo user.
 - **Contacts are not virtualized.** They are paginated with a "Load more" button and narrowed down by the server-side search.
 - **Strict Mode in development** can send some requests twice; production does not.
+- **`npm audit`** reports 5 high-severity advisories, all in development tooling (`braces`, reached through `eslint-config-next`). The production dependencies have none (`npm audit --omit=dev`). Forcing the suggested fix would downgrade `eslint-config-next` to an older major version, so it was left as is.
 - **English only.** The interface text is in English and is not prepared for translation.
 
 ## Time spent
