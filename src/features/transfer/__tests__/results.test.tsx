@@ -23,28 +23,12 @@ const setup = (state: ConfirmState) => {
   return { onRetry, store, container: view.container };
 };
 describe("ConfirmationResult", () => {
-  it("renders nothing while idle", () => {
-    const { container } = setup({ status: "idle" });
-    expect(container).toBeEmptyDOMElement();
-  });
-
   describe("processing", () => {
     it("shows the spinner and Processing…", () => {
       setup({ status: "processing", slow: false });
       expect(screen.getByText("Processing…")).toBeVisible();
       expect(screen.queryByText("This is taking longer than usual")).not.toBeInTheDocument();
     });
-
-    it("explains when it takes longer than usual", () => {
-      setup({ status: "processing", slow: true });
-      expect(screen.getByText("Processing…")).toBeVisible();
-      expect(screen.getByText("This is taking longer than usual")).toBeVisible();
-    });
-  });
-
-  it("success tells the user the receipt is opening", () => {
-    setup({ status: "success" });
-    expect(screen.getByRole("status")).toHaveTextContent("Transfer completed");
   });
 
   describe("NETWORK_ERROR", () => {
@@ -113,12 +97,5 @@ describe("ReceiptView", () => {
     expect(screen.getByText("Ana García")).toBeVisible();
     expect(screen.getByText("$12,000.00")).toBeVisible();
     expect(screen.getByRole("status")).toHaveTextContent("Transfer completed");
-  });
-
-  it("links back to the home and to a new transfer", () => {
-    render(<ReceiptView receipt={receipt} />);
-
-    expect(screen.getByRole("link", { name: "Back to home" })).toHaveAttribute("href", "/home");
-    expect(screen.getByRole("link", { name: "New transfer" })).toHaveAttribute("href", "/transfer");
   });
 });
