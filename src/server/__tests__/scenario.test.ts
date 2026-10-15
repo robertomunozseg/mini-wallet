@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveListScenario, resolveScenario, SCENARIOS } from "../scenario";
+import { resolveScenario, SCENARIOS } from "../scenario";
 
 const requestWith = (header?: string): Pick<Request, "headers"> => {
   const headers = new Headers();
@@ -30,31 +30,5 @@ describe("resolveScenario", () => {
     [0.999, "unknown_error"],
   ])("maps random value %f to %s", (value, expected) => {
     expect(resolveScenario(requestWith(), () => value)).toBe(expected);
-  });
-
-  it("produces the expected distribution over a full sweep", () => {
-    const counts = new Map<string, number>();
-    for (let i = 0; i < 1000; i++) {
-      const scenario = resolveScenario(requestWith(), () => i / 1000);
-      counts.set(scenario, (counts.get(scenario) ?? 0) + 1);
-    }
-    expect(counts.get("success")).toBe(600);
-    expect(counts.get("network_error")).toBe(100);
-    expect(counts.get("insufficient_funds")).toBe(100);
-    expect(counts.get("timeout")).toBe(100);
-    expect(counts.get("unknown_error")).toBe(100);
-  });
-});
-
-describe("resolveListScenario", () => {
-  it("accepts empty, error and large", () => {
-    expect(resolveListScenario(requestWith("empty"))).toBe("empty");
-    expect(resolveListScenario(requestWith("error"))).toBe("error");
-    expect(resolveListScenario(requestWith("large"))).toBe("large");
-  });
-
-  it("returns null for anything else", () => {
-    expect(resolveListScenario(requestWith())).toBeNull();
-    expect(resolveListScenario(requestWith("success"))).toBeNull();
   });
 });

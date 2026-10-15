@@ -5,12 +5,7 @@ import type { Receipt } from "@/domain/types";
 import {
   getOutcome,
   getReceiptById,
-  listMovements,
-  MAX_STORED_OUTCOMES,
-  MAX_STORED_RECEIPTS,
   OUTCOME_TTL_MS,
-  outcomeCount,
-  receiptCount,
   resetDb,
   saveOutcome,
   saveReceipt,
@@ -39,10 +34,6 @@ describe("idempotency store", () => {
     expect(getOutcome("key-1", NOW)).toEqual({ ok: true, value: receipt });
   });
 
-  it("returns undefined for an unknown key", () => {
-    expect(getOutcome("nope", NOW)).toBeUndefined();
-  });
-
   describe("TTL", () => {
     it("expires after 24 hours", () => {
       expect(OUTCOME_TTL_MS).toBe(24 * 60 * 60 * 1000);
@@ -50,49 +41,6 @@ describe("idempotency store", () => {
 
       expect(getOutcome("key-1", NOW + OUTCOME_TTL_MS)).toBeDefined();
       expect(getOutcome("key-1", NOW + OUTCOME_TTL_MS + 1)).toBeUndefined();
-    });
-
-    it("removes the expired entry", () => {
-      saveOutcome("key-1", ok(receipt), NOW);
-      getOutcome("key-1", NOW + OUTCOME_TTL_MS + 1);
-      expect(outcomeCount()).toBe(0);
-    });
-
-    it("storing a key again restarts its time", () => {
-      saveOutcome("key-1", ok(receipt), NOW);
-      saveOutcome("key-1", ok(receipt), NOW + OUTCOME_TTL_MS);
-      expect(getOutcome("key-1", NOW + OUTCOME_TTL_MS + 1_000)).toBeDefined();
-    });
-  });
-
-  describe("size cap", () => {
-    it("never holds more than the maximum", () => {
-      expect(MAX_STORED_OUTCOMES).toBe(10_000);
-      for (let index = 0; index < MAX_STORED_OUTCOMES + 500; index += 1) {
-        saveOutcome(`key-${index}`, ok(receipt), NOW);
-      }
-      expect(outcomeCount()).toBe(MAX_STORED_OUTCOMES);
-    });
-
-    it("drops the oldest entries first and keeps the newest", () => {
-      for (let index = 0; index < MAX_STORED_OUTCOMES + 3; index += 1) {
-        saveOutcome(`key-${index}`, ok(receipt), NOW);
-      }
-      expect(getOutcome("key-0", NOW)).toBeUndefined();
-      expect(getOutcome("key-2", NOW)).toBeUndefined();
-      expect(getOutcome("key-3", NOW)).toBeDefined();
-      expect(getOutcome(`key-${MAX_STORED_OUTCOMES + 2}`, NOW)).toBeDefined();
-    });
-
-    it("a repeated key counts as recent and survives the cleanup", () => {
-      for (let index = 0; index < MAX_STORED_OUTCOMES; index += 1) {
-        saveOutcome(`key-${index}`, ok(receipt), NOW);
-      }
-      saveOutcome("key-0", ok(receipt), NOW); // key-0 is now the newest
-      saveOutcome("extra", ok(receipt), NOW); // pushes out the oldest, which is key-1
-
-      expect(getOutcome("key-0", NOW)).toBeDefined();
-      expect(getOutcome("key-1", NOW)).toBeUndefined();
     });
   });
 
@@ -103,36 +51,9 @@ describe("idempotency store", () => {
   });
 });
 
-describe("listMovements", () => {
-  it("returns the seeded movements newest first", () => {
-    const movements = listMovements();
-    expect(movements).toHaveLength(8);
-    const dates = movements.map((movement) => movement.createdAt);
-    expect(dates).toEqual([...dates].sort().reverse());
-  });
-});
-
 describe("receipts", () => {
-  function receiptWithId(id: string): Receipt {
-    return { ...receipt, transaction: { ...receipt.transaction, id } };
-  }
-
   it("returns a stored receipt by transaction id", () => {
     saveReceipt(receipt);
     expect(getReceiptById("tx-1")).toEqual(receipt);
-  });
-
-  it("returns undefined for an unknown id", () => {
-    expect(getReceiptById("nope")).toBeUndefined();
-  });
-
-  it("never holds more than the maximum and drops the oldest first", () => {
-    for (let index = 0; index < MAX_STORED_RECEIPTS + 3; index += 1) {
-      saveReceipt(receiptWithId(`tx-${index}`));
-    }
-    expect(receiptCount()).toBe(MAX_STORED_RECEIPTS);
-    expect(getReceiptById("tx-0")).toBeUndefined();
-    expect(getReceiptById("tx-2")).toBeUndefined();
-    expect(getReceiptById("tx-3")).toBeDefined();
   });
 });

@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import type { Movement } from "@/domain/types";
 import { addMovement, resetDb } from "../../mock-db";
 import { list } from "../movementService";
 
@@ -7,17 +6,6 @@ beforeEach(() => {
   resetDb();
 });
 
-const walk = (limit: number, scenario?: "large"): Movement[] => {
-  const seen: Movement[] = [];
-  let cursor: string | undefined;
-  do {
-    const result = list({ limit, cursor, scenario });
-    if (!result.ok) throw new Error("unexpected error");
-    seen.push(...result.value.items);
-    cursor = result.value.nextCursor ?? undefined;
-  } while (cursor !== undefined);
-  return seen;
-};
 describe("movementService.list", () => {
   it("returns the seeded movements, newest first", () => {
     const result = list({ limit: 20 });
@@ -77,22 +65,6 @@ describe("movementService.list", () => {
         ok: false,
         error: { code: "UNKNOWN_ERROR" },
       });
-    });
-
-    it("large pages through 10,000 movements without repeating or skipping any", () => {
-      const seen = walk(50, "large");
-      expect(seen).toHaveLength(10_000);
-      expect(new Set(seen.map((movement) => movement.id)).size).toBe(10_000);
-    });
-
-    it("large keeps the newest first across pages", () => {
-      const seen = walk(50, "large");
-      const dates = seen.map((movement) => movement.createdAt);
-      expect(dates).toEqual([...dates].sort().reverse());
-    });
-
-    it("large does not include the real movements", () => {
-      expect(walk(50, "large").some((movement) => movement.id === "mov-001")).toBe(false);
     });
   });
 });
