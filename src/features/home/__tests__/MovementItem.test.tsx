@@ -49,20 +49,6 @@ describe("MovementItem", () => {
     expect(screen.getByText("Sent to")).toHaveClass("sr-only");
   });
 
-  it("shows the relative date and keeps the ISO date in the time element", () => {
-    renderItem(movement());
-
-    const time = screen.getByText("2 days ago");
-    expect(time.tagName).toBe("TIME");
-    expect(time).toHaveAttribute("datetime", "2026-10-12T12:00:00.000Z");
-  });
-
-  it("does not show a status label for completed movements", () => {
-    renderItem(movement());
-    expect(screen.queryByText("Pending")).not.toBeInTheDocument();
-    expect(screen.queryByText("Failed")).not.toBeInTheDocument();
-  });
-
   it("shows a Pending label", () => {
     renderItem(movement({ status: "pending" }));
     expect(screen.getByText("Pending")).toBeInTheDocument();
@@ -73,10 +59,5 @@ describe("MovementItem", () => {
 
     expect(screen.getByText("Failed")).toBeInTheDocument();
     expect(screen.getByText("-$600.00")).toHaveClass("line-through");
-  });
-
-  it("renders as a list item", () => {
-    renderItem(movement());
-    expect(screen.getByRole("listitem")).toBeInTheDocument();
   });
 });

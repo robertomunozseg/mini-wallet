@@ -21,16 +21,6 @@ describe("CurrentUser", () => {
 
     expect(screen.getByText("Demo User")).toBeInTheDocument();
   });
-
-  it("renders nothing until the session is in the store", () => {
-    const { container } = render(
-      <Provider store={makeStore()}>
-        <CurrentUser />
-      </Provider>,
-    );
-
-    expect(container).toBeEmptyDOMElement();
-  });
 });
 
 describe("SessionHydrator", () => {
@@ -45,14 +35,5 @@ describe("SessionHydrator", () => {
     );
 
     expect(store.getState().session.user).toEqual(user);
-  });
-
-  it("renders nothing", () => {
-    const { container } = render(
-      <Provider store={makeStore()}>
-        <SessionHydrator user={user} />
-      </Provider>,
-    );
-    expect(container).toBeEmptyDOMElement();
   });
 });

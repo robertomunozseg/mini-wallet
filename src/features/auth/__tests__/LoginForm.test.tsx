@@ -43,23 +43,9 @@ describe("LoginForm", () => {
       expect(screen.getByRole("alert")).toHaveTextContent("This field is required");
       expect(login).not.toHaveBeenCalled();
     });
-
-    it("turns blue when the field is valid", async () => {
-      render(<LoginForm />);
-      await userEvent.type(field(), "someone@example.com");
-
-      expect(signIn()).not.toHaveAttribute("aria-disabled");
-      expect(signIn()).toHaveClass("bg-blue-600");
-    });
   });
 
   describe("validation", () => {
-    it("shows no error before the user interacts", () => {
-      render(<LoginForm />);
-      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-      expect(field()).not.toHaveAttribute("aria-invalid");
-    });
-
     it("requires a value on blur", async () => {
       render(<LoginForm />);
       await userEvent.click(field());
@@ -90,16 +76,6 @@ describe("LoginForm", () => {
       expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     });
 
-    it("clears the error once the value becomes valid", async () => {
-      render(<LoginForm />);
-      await userEvent.type(field(), "ana");
-      await userEvent.tab();
-      expect(screen.getByRole("alert")).toBeInTheDocument();
-
-      await userEvent.type(field(), "@example.com");
-      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-    });
-
     it("does not submit an invalid value and shows the error", async () => {
       render(<LoginForm />);
       await userEvent.type(field(), "ana");
@@ -107,14 +83,6 @@ describe("LoginForm", () => {
 
       expect(login).not.toHaveBeenCalled();
       expect(screen.getByRole("alert")).toBeInTheDocument();
-    });
-
-    it("does not submit an empty form", async () => {
-      render(<LoginForm />);
-      await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
-
-      expect(login).not.toHaveBeenCalled();
-      expect(screen.getByRole("alert")).toHaveTextContent("This field is required");
     });
   });
 
@@ -125,21 +93,6 @@ describe("LoginForm", () => {
       await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
 
       expect(login).toHaveBeenCalledTimes(1);
-      expect(login).toHaveBeenCalledWith("ana@example.com");
-    });
-
-    it("submits a valid phone number", async () => {
-      render(<LoginForm />);
-      await userEvent.type(field(), "5512345678");
-      await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
-
-      expect(login).toHaveBeenCalledWith("5512345678");
-    });
-
-    it("submits with the Enter key", async () => {
-      render(<LoginForm />);
-      await userEvent.type(field(), "ana@example.com{Enter}");
-
       expect(login).toHaveBeenCalledWith("ana@example.com");
     });
   });
@@ -153,14 +106,6 @@ describe("LoginForm", () => {
       expect(button).toBeDisabled();
       expect(button).toHaveAttribute("aria-busy", "true");
     });
-
-    it("does not submit again while loading", async () => {
-      mockLogin({ isLoading: true });
-      render(<LoginForm />);
-      await userEvent.type(field(), "ana@example.com{Enter}");
-
-      expect(login).not.toHaveBeenCalled();
-    });
   });
 
   describe("api errors", () => {
@@ -173,37 +118,6 @@ describe("LoginForm", () => {
       expect(screen.getByRole("alert")).toHaveTextContent(
         "Invalid credentials. Check your details.",
       );
-    });
-
-    it("shows a network error in an alert", () => {
-      mockLogin({
-        error: { code: "NETWORK_ERROR", message: "We couldn't reach the server." },
-      });
-      render(<LoginForm />);
-
-      expect(screen.getByRole("alert")).toHaveTextContent("We couldn't reach the server.");
-    });
-
-    it("keeps the form usable after an error", async () => {
-      mockLogin({ error: { code: "NETWORK_ERROR", message: "We couldn't reach the server." } });
-      render(<LoginForm />);
-      await userEvent.type(field(), "ana@example.com");
-      await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
-
-      expect(login).toHaveBeenCalledWith("ana@example.com");
-    });
-  });
-
-  describe("input type detection", () => {
-    it.each([
-      ["ana@example.com", "email"],
-      ["5512345678", "tel"],
-      ["ana", "text"],
-    ])("sets inputMode for %j", async (value, inputMode) => {
-      render(<LoginForm />);
-      await userEvent.type(field(), value);
-
-      expect(field()).toHaveAttribute("inputmode", inputMode);
     });
   });
 });

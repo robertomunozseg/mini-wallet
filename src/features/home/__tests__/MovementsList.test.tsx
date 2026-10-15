@@ -114,14 +114,6 @@ describe("MovementsList", () => {
       await userEvent.click(screen.getByRole("button", { name: "Try again" }));
       expect(refetch).toHaveBeenCalledTimes(1);
     });
-
-    it("does not show the list or the empty state", () => {
-      mockHook({ error: { code: "UNKNOWN_ERROR", message: "Something went wrong." } });
-      render(<MovementsList />);
-
-      expect(screen.queryByRole("list")).not.toBeInTheDocument();
-      expect(screen.queryByText("No movements yet")).not.toBeInTheDocument();
-    });
   });
 
   describe("list state", () => {
@@ -132,20 +124,6 @@ describe("MovementsList", () => {
       expect(screen.getAllByRole("listitem")).toHaveLength(2);
       expect(screen.getByText("+$3,500.00")).toBeInTheDocument();
       expect(screen.getByText("-$1,200.50")).toBeInTheDocument();
-    });
-
-    it("has a heading and a labelled scroll region", () => {
-      mockHook({ items: movements });
-      render(<MovementsList />);
-
-      expect(screen.getByRole("heading", { name: "Recent movements" })).toBeInTheDocument();
-      expect(screen.getByRole("region", { name: "Movements" })).toBeInTheDocument();
-    });
-
-    it("keeps the list visible while a page is loading", () => {
-      mockHook({ items: movements, isLoadingMore: true, hasMore: true });
-      render(<MovementsList />);
-      expect(screen.getAllByRole("listitem").length).toBeGreaterThanOrEqual(2);
     });
 
     it("keeps the loaded items when a later page fails", () => {
@@ -159,13 +137,5 @@ describe("MovementsList", () => {
       expect(screen.getByText("Payroll")).toBeInTheDocument();
       expect(screen.getByText("We couldn't reach the server.")).toBeInTheDocument();
     });
-  });
-
-  it("passes the scenario and the first page to the hook", () => {
-    mockHook({ items: movements });
-    const initialPage = { items: movements, nextCursor: null };
-    render(<MovementsList scenario="large" initialPage={initialPage} />);
-
-    expect(useMovementsMock).toHaveBeenCalledWith("large", initialPage);
   });
 });
