@@ -72,4 +72,4 @@ Me detuve ahí: sin base de datos ni capa de caché.
 
 ## 10. Con más tiempo
 
-Base de datos real, autenticación real, observabilidad, traducciones, React Query o RTK Query, límite de peticiones y feature flags.
+Base de datos real, autenticación real, observabilidad, traducciones, React Query o RTK Query, límite de peticiones, feature flags, react hook form o formik.
