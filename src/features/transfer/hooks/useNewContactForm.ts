@@ -47,11 +47,11 @@ export const useNewContactForm = ({ onCreated }: UseNewContactFormOptions) => {
 
   const apiError: ApiError | null = useMemo(() => (error ? mapApiError(error) : null), [error]);
 
-  function touch(field: Field) {
+  const touch = (field: Field) => {
     setTouched((current) => ({ ...current, [field]: true }));
-  }
+  };
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
+  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setTouched({ name: true, phoneOrEmail: true });
     if (!validation.success || loading) return;
@@ -62,7 +62,7 @@ export const useNewContactForm = ({ onCreated }: UseNewContactFormOptions) => {
     } catch {
       // The failure is exposed through `apiError`.
     }
-  }
+  };
 
   return {
     name,

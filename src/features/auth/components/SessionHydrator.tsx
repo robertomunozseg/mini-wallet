@@ -7,8 +7,8 @@ import { hydrate } from "@/store/slices/sessionSlice";
 
 type SessionHydratorProps = { user: User };
 
-// Copies the user read on the server into the Redux store (it renders nothing).
-// Needed because the store is created empty and is not kept between page loads.
+// Copies the user from the server into the Redux store. It renders nothing.
+// The store starts empty on every page load, so something has to fill it.
 export const SessionHydrator = ({ user }: SessionHydratorProps) => {
   const dispatch = useAppDispatch();
 

@@ -48,10 +48,9 @@ export const TransferFlow = ({ balanceCents, scenario }: TransferFlowProps) => {
   const isSending = confirmState.status === "processing" || confirmState.status === "success";
   const [flowId, setFlowId] = useState(0);
 
-  // Leaving the flow (Back from the first step, another link, browser back) clears the draft.
-  // With Cache Components Next keeps the hidden page alive with its local state (typed text,
-  // open forms, the result of the last transfer), so the confirmation state is reset too and
-  // changing the key remounts the steps: the next transfer starts from scratch, with Back enabled.
+  // Leaving the flow (Back, another link, the browser back button) clears the draft. Next keeps
+  // the hidden page alive with its state, so the confirmation state is reset too and the new key
+  // remounts the steps: the next transfer starts clean, with Back enabled.
   useEffect(() => {
     return () => {
       dispatch(reset());
@@ -60,22 +59,21 @@ export const TransferFlow = ({ balanceCents, scenario }: TransferFlowProps) => {
     };
   }, [dispatch, resetConfirm]);
 
-  function handleBack() {
+  const onBack = () => {
     const previous = PREVIOUS_STEP[step];
     if (previous === null) {
       router.push("/home");
       return;
     }
     dispatch(goToStep(previous));
-  }
+  };
 
   return (
-    // The flow is as tall as what is left of the window (see --wallet-chrome in globals.css), so a
-    // long contact list scrolls inside itself instead of making the page scroll. Below 30rem there
-    // is not enough room for the steps, so the page scrolls then.
+    // The flow is as tall as what is left of the window (--wallet-chrome in globals.css), so a
+    // long contact list scrolls inside itself, not the page. Below 30rem the page scrolls.
     <div className="mx-auto flex h-[calc(100dvh-var(--wallet-chrome))] max-h-[50rem] min-h-[30rem] w-full max-w-xl flex-col gap-6 short:gap-3">
       <div>
-        <Button variant="ghost" onClick={handleBack} disabled={isSending} className="-ml-4">
+        <Button variant="ghost" onClick={onBack} disabled={isSending} className="-ml-4">
           ← Back
         </Button>
       </div>

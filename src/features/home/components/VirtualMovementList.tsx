@@ -26,8 +26,8 @@ const OVERSCAN = 5;
 const estimateRowHeight = (): number => {
   return ROW_HEIGHT_ESTIMATE;
 };
-// Only the rows near the viewport are in the DOM, however many movements are loaded: scrolling
-// a list of thousands costs the same as a list of ten. Scrolling to the end loads the next page.
+// Only the rows near the viewport are in the DOM, so a list of thousands costs the same as
+// one of ten. Reaching the end loads the next page.
 export const VirtualMovementList = ({
   movements,
   hasMore,
@@ -36,8 +36,8 @@ export const VirtualMovementList = ({
   loadMore,
 }: VirtualMovementListProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
-  // One extra row at the end while more pages exist: it shows "Loading more" and its arrival
-  // in the rendered window is the signal to request the next page.
+  // One extra row while more pages exist: it shows "Loading more", and when it comes into view
+  // the next page is requested.
   const rowCount = hasMore ? movements.length + 1 : movements.length;
 
   const getScrollElement = useCallback(() => scrollRef.current, []);
@@ -71,8 +71,8 @@ export const VirtualMovementList = ({
       role="region"
       aria-label="Movements"
       tabIndex={0}
-      // Only this list scrolls, not the page. The height is what is left of the window: on a phone the
-      // balance card sits above the list (it starts ~26rem down), from md they sit side by side.
+      // Only this list scrolls, not the page. Its height is what is left of the window: on a phone
+      // it starts below the balance card (~26rem), from md the cards sit side by side.
       // overscroll-contain keeps the page still when the list reaches its end.
       className="max-h-[max(14rem,calc(100dvh-29rem))] overflow-auto overscroll-contain focus-visible:outline-2 focus-visible:outline-blue-600 md:max-h-[max(20rem,calc(100dvh-18rem))]"
     >

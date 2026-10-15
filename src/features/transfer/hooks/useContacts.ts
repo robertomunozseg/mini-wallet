@@ -9,9 +9,9 @@ import { usePaginatedList, type PaginatedList } from "@/lib/use-paginated-list";
 const selectContacts = (response: ContactsResponse): Page<Contact> => {
   return { items: response.contacts, nextCursor: response.nextCursor };
 };
-// Contacts matching `query`, in pages: the search runs on the server, so the browser never
-// downloads the whole address book. Every new query starts again from page 1.
-// Pass an already debounced query, otherwise every key press would send a request.
+// Contacts that match `query`, page by page. The search runs on the server, so the browser
+// never downloads the whole address book. Pass a debounced query, or every key press sends
+// a request.
 export const useContacts = (query: string, scenario?: ListScenario): PaginatedList<Contact> => {
   const search = query.trim();
   return usePaginatedList({

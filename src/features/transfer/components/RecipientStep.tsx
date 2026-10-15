@@ -12,8 +12,7 @@ import type { Cents } from "@/domain/types";
 import { useRecipientStep } from "../hooks/useRecipientStep";
 import { ContactGroup } from "./ContactGroup";
 
-// The form is only needed when the user taps "New contact", so its code is loaded on demand
-// instead of being part of the first download of this step.
+// The form code is loaded only when the user taps "New contact", not with the first download.
 const NewContactForm = dynamic(
   () => import("./NewContactForm").then((module) => module.NewContactForm),
   { loading: () => <Skeleton className="h-72 w-full" /> },
@@ -41,14 +40,14 @@ export const RecipientStep = ({ balanceCents, scenario }: RecipientStepProps) =>
     showForm,
     toggleForm,
     closeForm,
-    handleSelect,
-    handleCreated,
-    handleContinue,
+    onSelect,
+    onCreated,
+    onContinue,
   } = useRecipientStep(balanceCents, scenario);
   const { items, isLoading, isLoadingMore, error, loadMoreError, hasMore, loadMore, refetch } =
     contacts;
 
-  function renderContacts() {
+  const renderContacts = () => {
     if (isLoading && items.length === 0) {
       return (
         <div role="status" className="flex flex-col gap-2">
@@ -87,13 +86,13 @@ export const RecipientStep = ({ balanceCents, scenario }: RecipientStepProps) =>
           title="Favorites"
           contacts={groups.favorites}
           selectedId={selectedId}
-          onSelect={handleSelect}
+          onSelect={onSelect}
         />
         <ContactGroup
           title="Other contacts"
           contacts={groups.others}
           selectedId={selectedId}
-          onSelect={handleSelect}
+          onSelect={onSelect}
         />
         {loadMoreError && (
           <p role="alert" className="text-sm text-red-700">
@@ -107,7 +106,7 @@ export const RecipientStep = ({ balanceCents, scenario }: RecipientStepProps) =>
         )}
       </div>
     );
-  }
+  };
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 short:gap-2">
@@ -146,7 +145,7 @@ export const RecipientStep = ({ balanceCents, scenario }: RecipientStepProps) =>
         aria-label="Contacts"
         className="flex min-h-24 flex-1 flex-col gap-4 overflow-y-auto"
       >
-        {showForm && <NewContactForm onCreated={handleCreated} onCancel={closeForm} />}
+        {showForm && <NewContactForm onCreated={onCreated} onCancel={closeForm} />}
 
         {renderContacts()}
       </div>
@@ -166,7 +165,7 @@ export const RecipientStep = ({ balanceCents, scenario }: RecipientStepProps) =>
           </p>
         )}
 
-        <Button onClick={handleContinue} incomplete={recipientMissing}>
+        <Button onClick={onContinue} incomplete={recipientMissing}>
           Continue
         </Button>
       </div>

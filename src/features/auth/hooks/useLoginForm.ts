@@ -15,20 +15,20 @@ export const useLoginForm = () => {
   const fieldError =
     touched && !validation.success ? validation.error.issues[0]?.message : undefined;
 
-  function onChange(event: ChangeEvent<HTMLInputElement>) {
+  const onChange = (event: ChangeEvent<HTMLInputElement>) => {
     setIdentifier(event.target.value);
-  }
+  };
 
-  function onBlur() {
+  const onBlur = () => {
     setTouched(true);
-  }
+  };
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
+  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setTouched(true);
     if (!validation.success || isLoading) return;
     void login(validation.data.identifier);
-  }
+  };
 
   return {
     identifier,
