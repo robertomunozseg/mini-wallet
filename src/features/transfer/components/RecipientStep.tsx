@@ -90,7 +90,7 @@ export function RecipientStep({ balanceCents, scenario }: RecipientStepProps) {
           onSelect={handleSelect}
         />
         <ContactGroup
-          title="All contacts"
+          title="Other contacts"
           contacts={groups.others}
           selectedId={selectedId}
           onSelect={handleSelect}

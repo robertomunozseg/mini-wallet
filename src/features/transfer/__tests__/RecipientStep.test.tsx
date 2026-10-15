@@ -100,20 +100,20 @@ describe("RecipientStep", () => {
       expect(names[3]).toContain("Carlos Ruiz");
     });
 
-    it("groups the contacts under Favorites and All contacts", () => {
+    it("groups the contacts under Favorites and Other contacts", () => {
       renderStep();
 
       const favorites = screen.getByRole("group", { name: "Favorites" });
-      const others = screen.getByRole("group", { name: "All contacts" });
+      const others = screen.getByRole("group", { name: "Other contacts" });
       expect(within(favorites).getAllByRole("radio")).toHaveLength(3);
       expect(within(others).getAllByRole("radio")).toHaveLength(1);
     });
 
-    it("hides the All contacts group when every contact is a favorite", () => {
+    it("hides the Other contacts group when every contact is a favorite", () => {
       mockContacts({ items: contacts.filter((contact) => contact.isFavorite) });
       renderStep();
 
-      expect(screen.queryByRole("group", { name: "All contacts" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("group", { name: "Other contacts" })).not.toBeInTheDocument();
     });
 
     it("asks for the first page with an empty search", () => {

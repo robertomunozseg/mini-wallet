@@ -67,7 +67,7 @@ describe("ContactGroup", () => {
       const totalReads = () => tracked.reduce((sum, item) => sum + item.reads(), 0);
       const ui = (selectedId: string | null) => (
         <ContactGroup
-          title="All contacts"
+          title="Other contacts"
           contacts={contacts}
           selectedId={selectedId}
           onSelect={onSelect}
