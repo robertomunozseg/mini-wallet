@@ -40,6 +40,7 @@ Trabajé por fases. En cada una le pedí a Claude un plan, lo revisé y lo aprob
 - Pedí **quitar el scroll de toda la página** y un **color más visible al pasar el cursor** por el botón "+".
 - Reporté fallos que Claude corrigió: un **error de hidratación** y el **Home que se recargaba sin parar**.
 - Detecté movimientos repetidos de "Ana García" y pedí revisarlos: eran de las pruebas automáticas, no un error de la app.
+- Probando el diseño responsivo en las herramientas del navegador vi que en celular el scroll era de toda la página y no de la lista de movimientos; pedí revisarlo antes de cambiar nada y aprobé el ajuste.
 
 ## 3. Decisiones que tomé yo
 
