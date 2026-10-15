@@ -3,9 +3,9 @@ import { sortMovements } from "@/domain/movements";
 import { sortContacts } from "@/domain/contacts";
 import type { Contact, Movement } from "@/domain/types";
 
-// A big read-only dataset to try pagination and virtualization (x-mock-scenario: large).
-// It is generated from the index only (no Math.random, no Date.now), so it is identical on
-// every call and in every test. It is built once and then reused.
+// A big read-only dataset to try pagination and virtualization (?scenario=large).
+// It is made from the index only (no Math.random, no Date.now), so it is the same on every
+// call and in every test. It is built once and reused.
 
 export const LARGE_MOVEMENTS_COUNT = 10_000;
 export const LARGE_CONTACTS_COUNT = 5_000;
@@ -51,21 +51,19 @@ const LAST_NAMES = [
   "Cruz",
 ];
 
-// 2026-10-13T12:00:00Z: fixed, so the generated dates never depend on the current time.
+// Fixed date (2026-10-13T12:00:00Z), so the generated dates do not depend on today.
 const NEWEST_MOVEMENT_MS = Date.UTC(2026, 9, 13, 12, 0, 0);
 const MINUTES_BETWEEN_MOVEMENTS = 37;
 
-function padded(index: number, width: number): string {
-  return String(index).padStart(width, "0");
-}
+const padded = (index: number, width: number): string => String(index).padStart(width, "0");
 
-function personName(index: number): string {
+const personName = (index: number): string => {
   const first = FIRST_NAMES[index % FIRST_NAMES.length] ?? "Ana";
   const last = LAST_NAMES[Math.floor(index / FIRST_NAMES.length) % LAST_NAMES.length] ?? "García";
   return `${first} ${last}`;
-}
+};
 
-function generateMovements(count: number): Movement[] {
+const generateMovements = (count: number): Movement[] => {
   const movements: Movement[] = [];
   for (let index = 0; index < count; index += 1) {
     const createdAt = new Date(
@@ -81,9 +79,9 @@ function generateMovements(count: number): Movement[] {
     });
   }
   return movements;
-}
+};
 
-function generateContacts(count: number): Contact[] {
+const generateContacts = (count: number): Contact[] => {
   const contacts: Contact[] = [];
   for (let index = 0; index < count; index += 1) {
     contacts.push({
@@ -95,19 +93,19 @@ function generateContacts(count: number): Contact[] {
     });
   }
   return contacts;
-}
+};
 
 let movements: readonly Movement[] | undefined;
 let contacts: readonly Contact[] | undefined;
 
 // Newest first, like the real list.
-export function largeMovements(): readonly Movement[] {
+export const largeMovements = (): readonly Movement[] => {
   movements ??= sortMovements(generateMovements(LARGE_MOVEMENTS_COUNT));
   return movements;
-}
+};
 
 // Favorites first, then by name, like the real list.
-export function largeContacts(): readonly Contact[] {
+export const largeContacts = (): readonly Contact[] => {
   contacts ??= sortContacts(generateContacts(LARGE_CONTACTS_COUNT));
   return contacts;
-}
+};

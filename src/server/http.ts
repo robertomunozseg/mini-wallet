@@ -3,7 +3,7 @@ import type { z } from "zod";
 import type { ApiError, ApiErrorBody, ApiErrorCode } from "@/domain/errors";
 import { apiError, validationError } from "./api-error";
 
-// Single place that maps an error code to its HTTP status.
+// The one place that says which HTTP status each error code has.
 const STATUS_BY_CODE: Record<ApiErrorCode, number> = {
   VALIDATION_ERROR: 400,
   INVALID_CREDENTIALS: 401,
@@ -14,28 +14,22 @@ const STATUS_BY_CODE: Record<ApiErrorCode, number> = {
   TIMEOUT: 504,
 };
 
-// The API returns data of one user, so no shared cache (CDN, proxy) may store it. "private" also
-// lets the browser keep it, but "no-store" tells it to always ask again: balances and lists
-// must never be shown stale.
+// These are one user's data, so no shared cache (CDN, proxy) may keep them. "no-store" also
+// makes the browser ask again, so a balance or a list is never shown stale.
 const NO_STORE = { "Cache-Control": "private, no-store" };
 
-export function jsonOk<T>(body: T, status = 200): NextResponse<T> {
-  return NextResponse.json(body, { status, headers: NO_STORE });
-}
+export const jsonOk = <T>(body: T, status = 200): NextResponse<T> =>
+  NextResponse.json(body, { status, headers: NO_STORE });
 
-export function jsonError(error: ApiError): NextResponse<ApiErrorBody> {
-  return NextResponse.json({ error }, { status: STATUS_BY_CODE[error.code], headers: NO_STORE });
-}
+export const jsonError = (error: ApiError): NextResponse<ApiErrorBody> =>
+  NextResponse.json({ error }, { status: STATUS_BY_CODE[error.code], headers: NO_STORE });
 
-export function unauthorizedResponse(): NextResponse<ApiErrorBody> {
-  return jsonError(apiError("UNAUTHORIZED", "You must sign in to continue."));
-}
+export const unauthorizedResponse = (): NextResponse<ApiErrorBody> =>
+  jsonError(apiError("UNAUTHORIZED", "You must sign in to continue."));
 
-export function validationErrorResponse(error: z.ZodError): NextResponse<ApiErrorBody> {
-  return jsonError(validationError(error));
-}
+export const validationErrorResponse = (error: z.ZodError): NextResponse<ApiErrorBody> =>
+  jsonError(validationError(error));
 
-// Returns null when the body is missing or is not valid JSON; the schema then rejects it.
-export async function readJsonBody(request: Request): Promise<unknown> {
-  return request.json().catch(() => null);
-}
+// null when the body is empty or not JSON; the schema then rejects it.
+export const readJsonBody = (request: Request): Promise<unknown> =>
+  request.json().catch(() => null);

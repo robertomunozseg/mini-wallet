@@ -14,9 +14,9 @@ type ListParams = {
   scenario?: ListScenario | null | undefined;
 };
 
-// One page of movements, newest first. Used by the API route and by the Home page (Server
-// Component), which asks for the first page directly instead of calling its own API.
-export function list({ limit, cursor, scenario }: ListParams): Result<Page<Movement>, ApiError> {
+// One page of movements, newest first. The API route and the Home page (a Server Component,
+// which asks for page 1 directly instead of calling its own API) both use it.
+export const list = ({ limit, cursor, scenario }: ListParams): Result<Page<Movement>, ApiError> => {
   if (scenario === "error") {
     return err(apiError("UNKNOWN_ERROR", "Could not load your movements."));
   }
@@ -32,4 +32,4 @@ export function list({ limit, cursor, scenario }: ListParams): Result<Page<Movem
   });
   if (!page.ok) return err(apiError("VALIDATION_ERROR", "The cursor is not valid."));
   return page;
-}
+};

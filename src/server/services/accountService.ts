@@ -5,12 +5,10 @@ import type { Account, Cents } from "@/domain/types";
 import { apiError } from "../api-error";
 import { getBalance, getUser, setBalance } from "../mock-db";
 
-export function getAccount(): Account {
-  return { userId: getUser().id, balanceCents: getBalance() };
-}
+export const getAccount = (): Account => ({ userId: getUser().id, balanceCents: getBalance() });
 
-// Synchronous on purpose: check and update happen with no await in between, so they are atomic.
-export function debit(amountCents: Cents): Result<Cents, ApiError> {
+// No await between the check and the update, so two transfers can never spend the same money.
+export const debit = (amountCents: Cents): Result<Cents, ApiError> => {
   const balanceCents = getBalance();
   if (amountCents > balanceCents) {
     return err(apiError("INSUFFICIENT_FUNDS", "Insufficient balance."));
@@ -18,4 +16,4 @@ export function debit(amountCents: Cents): Result<Cents, ApiError> {
   const newBalanceCents = asCents(balanceCents - amountCents);
   setBalance(newBalanceCents);
   return ok(newBalanceCents);
-}
+};

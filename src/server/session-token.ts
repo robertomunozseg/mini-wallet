@@ -1,10 +1,9 @@
-// No imports from next/headers on purpose: the proxy and session.ts both use this file.
+// Kept apart from session.ts on purpose: the proxy needs these and cannot import next/headers.
 
 export const SESSION_COOKIE = "mw_session";
 
-// Mock: a real app would store a random, per-session token and look it up in a database.
+// Mock: a real app would use a random token per session and look it up in a database.
 export const MOCK_SESSION_TOKEN = "mock-session-token";
 
-export function isValidSessionToken(value: string | undefined): boolean {
-  return value === MOCK_SESSION_TOKEN;
-}
+export const isValidSessionToken = (value: string | undefined): boolean =>
+  value === MOCK_SESSION_TOKEN;
