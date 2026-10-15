@@ -11,24 +11,97 @@ A small wallet web app: sign in, see your balance and movements, send money to a
 
 > **Note:** about 4 in 10 transfer confirmations fail on purpose, as the brief asks. See [Forcing scenarios](#forcing-scenarios) to choose the result.
 
-## Requirements
+## Try it step by step
 
-- Node.js 20.9 or newer (developed and tested on Node 22)
-- npm
+No programming experience is needed. You only need access to this repository and a computer with internet.
 
-## Getting started
+### 1. Install two tools (once)
+
+- **Git**, to download the project: <https://git-scm.com/downloads>
+- **Node.js**, to run it. Download the **LTS** version (20.9 or newer; it was developed on Node 22): <https://nodejs.org>
+
+Install both with the default options (Next, Next, Finish).
+Then open a **terminal**: on Windows press the Start key, type `PowerShell` and open it; on macOS press `Cmd + Space`, type `Terminal` and open it.
+Check that both tools work by typing these two lines (press Enter after each). Each one should print a version number:
+
+```bash
+git --version
+node -v
+```
+
+If a line says "not recognized" or "command not found", close the terminal, open a new one and try again.
+
+### 2. Download the project
+
+Copy these two lines into the terminal, one at a time:
+
+```bash
+git clone https://github.com/robertomunozseg/mini-wallet.git
+cd mini-wallet
+```
+
+The first one downloads the project into a new folder called `mini-wallet`; the second one enters that folder.
+All the next commands must be typed inside this folder.
+
+### 3. Install what the project needs
 
 ```bash
 npm install
+```
+
+It takes about one or two minutes and prints a lot of text. That is normal.
+At the end it may say that there are "high severity vulnerabilities". They are in development tools only, not in the app (see [Known limitations](#known-limitations)).
+
+### 4. Start the app
+
+```bash
 npm run dev
 ```
 
-Open <http://localhost:3000>. That is all you need; no environment variables are required.
+Wait until you see `Ready` and a line with `http://localhost:3000`.
+**Leave this window open**: closing it stops the app.
 
-To run the end-to-end tests the first time you also need the Playwright browser:
+### 5. Open it in the browser
+
+Open Chrome (or any browser) and go to <http://localhost:3000>.
+
+### 6. Try it
+
+1. Sign in with `someone@example.com` (or the phone `5512345678`). Any valid email or 10-digit phone works.
+2. You will see the balance (12,500.00 MXN) and a list of movements.
+3. Press **New transfer**, type an amount such as `100`, press **Continue**, choose **Ana García**, press **Continue** and then **Confirm**.
+4. You get either a **receipt** or an **error screen**. Errors are on purpose: about 4 in 10 confirmations fail so that every case can be seen. Use **Try again**, **Change amount** or **Back to home**.
+5. Try things that should be refused: sign in with `fail@test.com`, an amount above the balance, or continue without choosing a recipient.
+6. Press the **+** next to the search box to add a new contact.
+7. Press **Sign out** when you are done.
+
+To choose the result of a transfer instead of leaving it to chance, see [Forcing scenarios](#forcing-scenarios).
+
+### Stop and start again
+
+Go to the terminal window and press `Ctrl + C`.
+To start again, open a terminal in the `mini-wallet` folder and run `npm run dev`.
+The data is kept in memory, so it goes back to the initial state every time the app is stopped and started.
+
+### If something goes wrong
+
+- **"not recognized" / "command not found"**: the tool is not installed, or the terminal was open before installing it. Close it and open a new one.
+- **The address is not `localhost:3000`**: if that port is busy, the app starts on the next one (for example 3001). Open the address printed next to `Local:` in the terminal.
+- **"Another next dev server is already running"**: the app is already running in another terminal window of this folder. Use that one, or close it first.
+- **`npm install` fails**: check your internet connection and run it again.
+- **The page is blank or shows an old version**: refresh with `Ctrl + Shift + R` (on macOS `Cmd + Shift + R`).
+
+### Run the automated tests (optional)
+
+```bash
+npm test
+```
+
+runs the unit tests. For the end-to-end tests (they open a browser by themselves), first install its browser once and make sure `npm run dev` is **not** running:
 
 ```bash
 npx playwright install chromium
+npm run test:e2e
 ```
 
 ## Demo credentials
@@ -45,7 +118,7 @@ There are no real accounts. The login accepts:
 
 `POST /api/transactions` picks a scenario at random (success 60 %, every other scenario 10 %), so a transfer can fail on purpose. To see a specific case:
 
-- **Demo selector (easiest).** Create a file named `.env.local` with `NEXT_PUBLIC_DEMO_MODE=true` and restart `npm run dev`. The transfer summary then shows a **Simulated scenario** selector: random (default), `success`, `network_error`, `insufficient_funds`, `timeout` or `unknown_error`.
+- **Demo selector (easiest).** In the `mini-wallet` folder create a text file named `.env.local` that contains exactly `NEXT_PUBLIC_DEMO_MODE=true`, then stop the app (`Ctrl + C`) and run `npm run dev` again. The transfer summary then shows a **Simulated scenario** selector: random (default), `success`, `network_error`, `insufficient_funds`, `timeout` or `unknown_error`.
 - **Header.** Send `x-mock-scenario: <scenario>` with the request (this is what the end-to-end tests do).
 - **Lists.** Add a query parameter to the page URL:
   - `/home?scenario=empty` shows the empty state, `/home?scenario=error` the error state with a retry button.
