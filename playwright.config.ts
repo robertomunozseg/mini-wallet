@@ -6,6 +6,8 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   reporter: "list",
+  // The first visit to a route compiles it in dev mode, which can take longer than the 5 s default.
+  expect: { timeout: 10_000 },
   use: {
     baseURL: "http://localhost:3000",
     trace: "on-first-retry",
