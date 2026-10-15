@@ -1,9 +1,5 @@
 export type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
 
-export function ok<T>(value: T): Result<T, never> {
-  return { ok: true, value };
-}
+export const ok = <T>(value: T): Result<T, never> => ({ ok: true, value });
 
-export function err<E>(error: E): Result<never, E> {
-  return { ok: false, error };
-}
+export const err = <E>(error: E): Result<never, E> => ({ ok: false, error });

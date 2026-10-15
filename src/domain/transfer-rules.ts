@@ -2,7 +2,7 @@ import type { TransferValidationError } from "./errors";
 import { err, ok, type Result } from "./result";
 import type { Cents, ValidTransfer } from "./types";
 
-// Messages for each rule. Shared: the client shows them inline and the server returns them.
+// One message per rule. The client shows it inline and the server sends it back.
 export const TRANSFER_ERROR_MESSAGES: Record<TransferValidationError, string> = {
   AMOUNT_REQUIRED: "Enter an amount.",
   AMOUNT_NOT_POSITIVE: "The amount must be greater than zero.",
@@ -11,16 +11,16 @@ export const TRANSFER_ERROR_MESSAGES: Record<TransferValidationError, string> = 
 };
 
 type TransferInput = {
-  // null means the typed text could not be parsed as an amount (see toCents).
-  amountCents: Cents | null;
+  amountCents: Cents | null; // null: the typed text is not an amount (see toCents)
   balanceCents: Cents;
   recipient: string;
 };
 
-// Runs on the client (UX) and on the server (source of truth). Returns ALL errors found.
-export function validateTransfer(
+// The three transfer rules. The client runs it for quick feedback and the server runs it again
+// as the source of truth. It returns every error it finds, not only the first.
+export const validateTransfer = (
   input: TransferInput,
-): Result<ValidTransfer, TransferValidationError[]> {
+): Result<ValidTransfer, TransferValidationError[]> => {
   const { amountCents, balanceCents } = input;
   const recipient = input.recipient.trim();
   const errors: TransferValidationError[] = [];
@@ -41,4 +41,4 @@ export function validateTransfer(
     return err(errors);
   }
   return ok({ amountCents, recipient });
-}
+};
