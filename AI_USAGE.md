@@ -50,3 +50,11 @@ Trabajé por fases. En cada una le pedí a Claude un plan, lo revisé y lo aprob
 - **Qué dejar para el final** (los ajustes de documentación) y **no desplegar la app en Vercel** por ahora, para no depender de una versión demo ni de una base de datos.
 
 ## Reflexiones
+
+La IA me ahorró mucho tiempo escribiendo código, pero no me quitó el trabajo de revisarlo. Lo que más me sirvió fue pedir siempre un plan antes del código: así pude decidir yo, por ejemplo descartar que el contacto avanzara solo al elegirlo, o dejar el servidor de las pruebas como estaba.
+
+Varias cosas las encontré yo al probar la app, no las vio la IA: un error de hidratación, el Home que se recargaba sin parar, los movimientos repetidos de "Ana García" (venían de las pruebas automáticas) y, en mi pantalla grande, el scroll de toda la página y el botón "New contact" que se confundía con "Continue". También me enseñó que una prueba puede ser el problema y no el código: una fallaba una de cada tres veces porque llenaba el formulario antes de que la página estuviera lista.
+
+Probar un clon limpio del repositorio me mostró algo que en mi equipo no se veía: el typecheck fallaba hasta que Next generaba sus tipos.
+
+Lo que haría distinto es decidir desde el primer prompt el idioma de la interfaz, porque lo tuve que cambiar a inglés después. En un punto también dudé de si eran demasiados archivos y pedí revisarlo antes de seguir. Lo que entra en el proyecto y lo que no lo decido yo, y por eso en cada fase leí el plan antes de aprobarlo.
