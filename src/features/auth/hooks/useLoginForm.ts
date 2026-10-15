@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, type ChangeEvent, type FormEvent } from "react";
-import { detectIdentifierType } from "@/domain/schemas";
-import { loginSchema } from "@/domain/schemas";
+import { detectIdentifierType, loginSchema } from "@/domain/schemas";
 import { useLogin } from "./useLogin";
 
 // Form state and validation for LoginForm. The field is validated on blur and on submit.
