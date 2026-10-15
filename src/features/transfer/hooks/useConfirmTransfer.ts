@@ -30,6 +30,8 @@ type UseConfirmTransferResult = {
   state: ConfirmState;
   confirm: () => Promise<void>;
   retry: () => Promise<void>;
+  // Back to idle, for when the user leaves the flow and starts a new transfer.
+  reset: () => void;
 };
 
 // Sends POST /transactions for the transfer draft. The Idempotency-Key lives in the store, so
@@ -92,5 +94,9 @@ export function useConfirmTransfer(): UseConfirmTransferResult {
   const state: ConfirmState =
     phase.status === "processing" ? { status: "processing", slow } : phase;
 
-  return { state, confirm, retry: send };
+  const reset = useCallback(() => {
+    setPhase({ status: "idle" });
+  }, []);
+
+  return { state, confirm, retry: send, reset };
 }

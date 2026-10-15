@@ -43,20 +43,22 @@ export function TransferFlow({ balanceCents, scenario }: TransferFlowProps) {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const step = useAppSelector(selectTransferStep);
-  const { state: confirmState, confirm, retry } = useConfirmTransfer();
+  const { state: confirmState, confirm, retry, reset: resetConfirm } = useConfirmTransfer();
   // Going back while the request is in flight would hide a transfer that is still being made.
   const isSending = confirmState.status === "processing" || confirmState.status === "success";
   const [flowId, setFlowId] = useState(0);
 
   // Leaving the flow (Back from the first step, another link, browser back) clears the draft.
   // With Cache Components Next keeps the hidden page alive with its local state (typed text,
-  // open forms), so changing the key also remounts the steps and they start from scratch.
+  // open forms, the result of the last transfer), so the confirmation state is reset too and
+  // changing the key remounts the steps: the next transfer starts from scratch, with Back enabled.
   useEffect(() => {
     return () => {
       dispatch(reset());
+      resetConfirm();
       setFlowId((id) => id + 1);
     };
-  }, [dispatch]);
+  }, [dispatch, resetConfirm]);
 
   function handleBack() {
     const previous = PREVIOUS_STEP[step];

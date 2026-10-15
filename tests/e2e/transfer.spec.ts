@@ -226,6 +226,11 @@ test.describe("successful transfer and receipt", () => {
       page.getByRole("heading", { name: "How much do you want to send?" }),
     ).toBeVisible();
     await expect(page.getByLabel("Amount (MXN)")).toHaveValue("");
+    // The result of the last transfer must not leave Back disabled in the new one.
+    const back = page.getByRole("button", { name: /Back/ });
+    await expect(back).toBeEnabled();
+    await back.click();
+    await expect(page).toHaveURL(/\/home$/);
   });
 
   test("an unknown receipt shows Receipt not found", async ({ signedIn: page }) => {
