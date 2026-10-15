@@ -17,103 +17,107 @@ type Db = {
   receiptsById: Map<string, Receipt>;
 };
 
-function createInitialDb(): Db {
-  return {
-    user: { id: "user-demo", name: "Demo User", email: "demo@example.com" },
-    balanceCents: asCents(1_250_000), // 12,500.00 MXN
-    movements: [
-      movement("mov-001", "incoming", 350_000, "Payroll", "2026-10-01T09:00:00.000Z"),
-      movement("mov-002", "outgoing", 120_050, "Ana García", "2026-10-02T14:30:00.000Z"),
-      movement("mov-003", "outgoing", 45_000, "Luis Hernández", "2026-10-03T18:10:00.000Z"),
-      movement("mov-004", "incoming", 80_000, "María López", "2026-10-05T11:45:00.000Z"),
-      movement("mov-005", "outgoing", 15_000, "Carlos Ruiz", "2026-10-06T20:05:00.000Z"),
-      movement("mov-006", "incoming", 200_000, "Refund", "2026-10-08T08:20:00.000Z", "pending"),
-      movement("mov-007", "outgoing", 60_000, "Ana García", "2026-10-09T16:00:00.000Z", "failed"),
-      movement("mov-008", "outgoing", 99_900, "Luis Hernández", "2026-10-10T13:15:00.000Z"),
-    ],
-    contacts: [
-      {
-        id: "contact-1",
-        name: "Ana García",
-        phoneOrEmail: "ana.garcia@example.com",
-        isFavorite: true,
-      },
-      { id: "contact-2", name: "Luis Hernández", phoneOrEmail: "5512345678", isFavorite: true },
-      { id: "contact-3", name: "María López", phoneOrEmail: "5598765432", isFavorite: true },
-      {
-        id: "contact-4",
-        name: "Carlos Ruiz",
-        phoneOrEmail: "carlos.ruiz@example.com",
-        isFavorite: false,
-      },
-    ],
-    outcomesByKey: new Map(),
-    receiptsById: new Map(),
-  };
-}
-
-function movement(
+const movement = (
   id: string,
   type: Movement["type"],
   amountCents: number,
   counterpartName: string,
   createdAt: string,
   status: Movement["status"] = "completed",
-): Movement {
-  return { id, type, amountCents: asCents(amountCents), counterpartName, createdAt, status };
-}
+): Movement => ({
+  id,
+  type,
+  amountCents: asCents(amountCents),
+  counterpartName,
+  createdAt,
+  status,
+});
 
-// Module state is recreated on every hot reload in dev, so the instance is kept on globalThis.
+const createInitialDb = (): Db => ({
+  user: { id: "user-demo", name: "Demo User", email: "demo@example.com" },
+  balanceCents: asCents(1_250_000), // 12,500.00 MXN
+  movements: [
+    movement("mov-001", "incoming", 350_000, "Payroll", "2026-10-01T09:00:00.000Z"),
+    movement("mov-002", "outgoing", 120_050, "Ana García", "2026-10-02T14:30:00.000Z"),
+    movement("mov-003", "outgoing", 45_000, "Luis Hernández", "2026-10-03T18:10:00.000Z"),
+    movement("mov-004", "incoming", 80_000, "María López", "2026-10-05T11:45:00.000Z"),
+    movement("mov-005", "outgoing", 15_000, "Carlos Ruiz", "2026-10-06T20:05:00.000Z"),
+    movement("mov-006", "incoming", 200_000, "Refund", "2026-10-08T08:20:00.000Z", "pending"),
+    movement("mov-007", "outgoing", 60_000, "Ana García", "2026-10-09T16:00:00.000Z", "failed"),
+    movement("mov-008", "outgoing", 99_900, "Luis Hernández", "2026-10-10T13:15:00.000Z"),
+  ],
+  contacts: [
+    {
+      id: "contact-1",
+      name: "Ana García",
+      phoneOrEmail: "ana.garcia@example.com",
+      isFavorite: true,
+    },
+    { id: "contact-2", name: "Luis Hernández", phoneOrEmail: "5512345678", isFavorite: true },
+    { id: "contact-3", name: "María López", phoneOrEmail: "5598765432", isFavorite: true },
+    {
+      id: "contact-4",
+      name: "Carlos Ruiz",
+      phoneOrEmail: "carlos.ruiz@example.com",
+      isFavorite: false,
+    },
+  ],
+  outcomesByKey: new Map(),
+  receiptsById: new Map(),
+});
+
+// In dev, hot reload re-runs this module, so the data is kept on globalThis to survive it.
 const globalForDb = globalThis as unknown as { miniWalletDb?: Db };
 
-// The mutable state is private to this module: callers only get the functions below.
-function db(): Db {
-  const existing = globalForDb.miniWalletDb;
-  if (existing) return existing;
-  const created = createInitialDb();
-  globalForDb.miniWalletDb = created;
-  return created;
-}
+// The data is private to this file: the rest of the app only uses the functions below.
+const db = (): Db => {
+  globalForDb.miniWalletDb ??= createInitialDb();
+  return globalForDb.miniWalletDb;
+};
 
-export function resetDb(): void {
+// Used by tests to start from the initial data.
+export const resetDb = (): void => {
   globalForDb.miniWalletDb = createInitialDb();
-}
+};
 
-export function getUser(): User {
-  return { ...db().user };
-}
+export const getUser = (): User => ({ ...db().user });
 
-export function getBalance(): Cents {
-  return db().balanceCents;
-}
+export const getBalance = (): Cents => db().balanceCents;
 
-export function setBalance(balanceCents: Cents): void {
+export const setBalance = (balanceCents: Cents): void => {
   db().balanceCents = balanceCents;
-}
+};
 
-// Newest first (see sortMovements for the exact order).
-export function listMovements(): Movement[] {
-  return sortMovements(db().movements).map((item) => ({ ...item }));
-}
+// Newest first (see sortMovements).
+export const listMovements = (): Movement[] =>
+  sortMovements(db().movements).map((item) => ({ ...item }));
 
-export function addMovement(item: Movement): void {
+export const addMovement = (item: Movement): void => {
   db().movements.push({ ...item });
-}
+};
 
-export function listContacts(): Contact[] {
-  return db().contacts.map((contact) => ({ ...contact }));
-}
+export const listContacts = (): Contact[] => db().contacts.map((contact) => ({ ...contact }));
 
-export function addContact(contact: Contact): void {
+export const addContact = (contact: Contact): void => {
   db().contacts.push({ ...contact });
-}
+};
 
-// The idempotency store must not grow forever: entries expire after a TTL and the oldest ones
-// are dropped when the cap is reached. A real system would use a TTL in Redis or a database.
+// Both stores below must not grow forever. A Map keeps insertion order, so the first key is
+// the oldest and that is the one dropped when the limit is passed.
+const dropOldest = (map: Map<string, unknown>, limit: number): void => {
+  while (map.size > limit) {
+    const oldest = map.keys().next();
+    if (oldest.done) break;
+    map.delete(oldest.value);
+  }
+};
+
+// Idempotency: the result of each transfer by key. Entries expire after 24 h and there is a
+// limit. A real system would use a TTL in Redis or a database.
 export const OUTCOME_TTL_MS = 24 * 60 * 60 * 1000;
 export const MAX_STORED_OUTCOMES = 10_000;
 
-export function getOutcome(idempotencyKey: string, now = Date.now()): StoredOutcome | undefined {
+export const getOutcome = (idempotencyKey: string, now = Date.now()): StoredOutcome | undefined => {
   const outcomes = db().outcomesByKey;
   const entry = outcomes.get(idempotencyKey);
   if (!entry) return undefined;
@@ -123,48 +127,32 @@ export function getOutcome(idempotencyKey: string, now = Date.now()): StoredOutc
     return undefined;
   }
   return entry.outcome;
-}
+};
 
-export function saveOutcome(
+export const saveOutcome = (
   idempotencyKey: string,
   outcome: StoredOutcome,
   now = Date.now(),
-): void {
+): void => {
   const outcomes = db().outcomesByKey;
-  // Deleting first moves a repeated key to the end, so Map order stays "oldest first".
+  // Delete first so a repeated key moves to the end (the newest).
   outcomes.delete(idempotencyKey);
   outcomes.set(idempotencyKey, { outcome, storedAt: now });
+  dropOldest(outcomes, MAX_STORED_OUTCOMES);
+};
 
-  while (outcomes.size > MAX_STORED_OUTCOMES) {
-    const oldest = outcomes.keys().next();
-    if (oldest.done) break;
-    outcomes.delete(oldest.value);
-  }
-}
+export const outcomeCount = (): number => db().outcomesByKey.size;
 
-export function outcomeCount(): number {
-  return db().outcomesByKey.size;
-}
-
-// Receipts are kept by transaction id so the receipt page can be opened (and reloaded) later.
-// Capped like the idempotency store: the oldest receipts are dropped first.
+// Receipts by transaction id, so the receipt page can be opened (and reloaded) later.
 export const MAX_STORED_RECEIPTS = 10_000;
 
-export function saveReceipt(receipt: Receipt): void {
+export const saveReceipt = (receipt: Receipt): void => {
   const receipts = db().receiptsById;
   receipts.set(receipt.transaction.id, receipt);
+  dropOldest(receipts, MAX_STORED_RECEIPTS);
+};
 
-  while (receipts.size > MAX_STORED_RECEIPTS) {
-    const oldest = receipts.keys().next();
-    if (oldest.done) break;
-    receipts.delete(oldest.value);
-  }
-}
+export const getReceiptById = (transactionId: string): Receipt | undefined =>
+  db().receiptsById.get(transactionId);
 
-export function getReceiptById(transactionId: string): Receipt | undefined {
-  return db().receiptsById.get(transactionId);
-}
-
-export function receiptCount(): number {
-  return db().receiptsById.size;
-}
+export const receiptCount = (): number => db().receiptsById.size;

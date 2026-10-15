@@ -20,7 +20,7 @@ const AMOUNT_RULES: TransferValidationError[] = [
   "INSUFFICIENT_BALANCE",
 ];
 
-export function useAmountStep(balanceCents: Cents) {
+export const useAmountStep = (balanceCents: Cents) => {
   const dispatch = useAppDispatch();
   const amountCents = useAppSelector(selectAmountCents);
   const validation = useAppSelector((state) => selectTransferValidation(state, balanceCents));
@@ -33,17 +33,17 @@ export function useAmountStep(balanceCents: Cents) {
     ? undefined
     : validation.error.find((rule) => AMOUNT_RULES.includes(rule));
 
-  function onChange(event: ChangeEvent<HTMLInputElement>) {
+  const onChange = (event: ChangeEvent<HTMLInputElement>) => {
     setText(event.target.value);
     dispatch(setAmount(toCents(event.target.value)));
-  }
+  };
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
+  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setTouched(true);
     if (amountError) return;
     dispatch(goToStep("recipient"));
-  }
+  };
 
   return {
     text,
@@ -53,4 +53,4 @@ export function useAmountStep(balanceCents: Cents) {
     onBlur: () => setTouched(true),
     onSubmit,
   };
-}
+};

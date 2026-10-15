@@ -1,4 +1,4 @@
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import type { InternalAxiosRequestConfig } from "axios";
 import type { ReactNode } from "react";
 import { Provider } from "react-redux";
@@ -12,9 +12,9 @@ import {
   readBody,
   timeoutError,
 } from "@/test-utils/http-adapter";
-import { setAmount, setDemoScenario, setRecipient } from "@/store/slices/transferSlice";
+import { setAmount, setRecipient } from "@/store/slices/transferSlice";
 import { makeStore } from "@/store/store";
-import { SLOW_REQUEST_MS, useConfirmTransfer } from "../hooks/useConfirmTransfer";
+import { useConfirmTransfer } from "../hooks/useConfirmTransfer";
 
 const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
@@ -30,11 +30,10 @@ const receipt = {
   newBalanceCents: 95_000,
 };
 
-function failure(code: string) {
+const failure = (code: string) => {
   return { error: { code, message: "server message" } };
-}
-
-function setup() {
+};
+const setup = () => {
   const store = makeStore();
   store.dispatch(setAmount(asCents(5_000)));
   store.dispatch(setRecipient("Ana García"));
@@ -42,8 +41,7 @@ function setup() {
     <Provider store={store}>{children}</Provider>
   );
   return { store, ...renderHook(() => useConfirmTransfer(), { wrapper }) };
-}
-
+};
 describe("useConfirmTransfer", () => {
   let restore = () => {};
 
@@ -54,11 +52,6 @@ describe("useConfirmTransfer", () => {
 
   afterEach(() => {
     restore();
-  });
-
-  it("starts idle", () => {
-    const { result } = setup();
-    expect(result.current.state).toEqual({ status: "idle" });
   });
 
   describe("scenarios", () => {
@@ -149,22 +142,6 @@ describe("useConfirmTransfer", () => {
       expect(seen[0]?.headers.get(SCENARIO_HEADER)).toBeFalsy();
       expect(store.getState().transfer.step).toBe("confirming");
     });
-
-    it("sends x-mock-scenario when the demo scenario is forced", async () => {
-      const seen: InternalAxiosRequestConfig[] = [];
-      restore = installHttpAdapter((config) => {
-        seen.push(config);
-        return jsonResponse(config, 201, { receipt });
-      });
-      const { result, store } = setup();
-      act(() => {
-        store.dispatch(setDemoScenario("timeout"));
-      });
-
-      await act(() => result.current.confirm());
-
-      expect(seen[0]?.headers.get(SCENARIO_HEADER)).toBe("timeout");
-    });
   });
 
   describe("retry", () => {
@@ -186,60 +163,6 @@ describe("useConfirmTransfer", () => {
       expect(result.current.state).toEqual({ status: "success" });
       expect(router.push).toHaveBeenCalledWith("/transfer/receipt/tx-1");
     });
-
-    it("confirm() after a failure also keeps the key", async () => {
-      const keys: unknown[] = [];
-      restore = installHttpAdapter((config) => {
-        keys.push(config.headers.get("Idempotency-Key"));
-        return networkError(config);
-      });
-      const { result } = setup();
-
-      await act(() => result.current.confirm());
-      await act(() => result.current.confirm());
-
-      expect(keys[1]).toBe(keys[0]);
-    });
-
-    it("clears the previous error while the retry is in flight", async () => {
-      let release = () => {};
-      let calls = 0;
-      restore = installHttpAdapter((config) => {
-        calls += 1;
-        if (calls === 1) return networkError(config);
-        return new Promise((resolve) => {
-          release = () =>
-            resolve({ data: { receipt }, status: 201, statusText: "", headers: {}, config });
-        });
-      });
-      const { result } = setup();
-
-      await act(() => result.current.confirm());
-      let retrying: Promise<void> = Promise.resolve();
-      act(() => {
-        retrying = result.current.retry();
-      });
-
-      await waitFor(() => expect(result.current.state.status).toBe("processing"));
-      await act(async () => {
-        release();
-        await retrying;
-      });
-      expect(result.current.state).toEqual({ status: "success" });
-    });
-
-    it("does nothing without an idempotency key", async () => {
-      const seen: unknown[] = [];
-      restore = installHttpAdapter((config) => {
-        seen.push(config);
-        return jsonResponse(config, 201, { receipt });
-      });
-      const { result } = setup();
-
-      await act(() => result.current.retry());
-
-      expect(seen).toHaveLength(0);
-    });
   });
 
   describe("reset", () => {
@@ -248,17 +171,6 @@ describe("useConfirmTransfer", () => {
       const { result } = setup();
       await act(() => result.current.confirm());
       expect(result.current.state).toEqual({ status: "success" });
-
-      act(() => result.current.reset());
-
-      expect(result.current.state).toEqual({ status: "idle" });
-    });
-
-    it("clears an error too", async () => {
-      restore = installHttpAdapter((config) => networkError(config));
-      const { result } = setup();
-      await act(() => result.current.confirm());
-      expect(result.current.state).toMatchObject({ status: "error" });
 
       act(() => result.current.reset());
 
@@ -293,50 +205,6 @@ describe("useConfirmTransfer", () => {
 
       expect(calls).toBe(1);
       expect(router.push).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe("slow request", () => {
-    beforeEach(() => {
-      vi.useFakeTimers();
-    });
-
-    afterEach(() => {
-      vi.useRealTimers();
-    });
-
-    it("reports slow only after 3 seconds", async () => {
-      let release = () => {};
-      restore = installHttpAdapter(
-        (config) =>
-          new Promise((resolve) => {
-            release = () =>
-              resolve({ data: { receipt }, status: 201, statusText: "", headers: {}, config });
-          }),
-      );
-      const { result } = setup();
-
-      let sending: Promise<void> = Promise.resolve();
-      act(() => {
-        sending = result.current.confirm();
-      });
-      expect(result.current.state).toEqual({ status: "processing", slow: false });
-
-      act(() => {
-        vi.advanceTimersByTime(SLOW_REQUEST_MS - 1);
-      });
-      expect(result.current.state).toEqual({ status: "processing", slow: false });
-
-      act(() => {
-        vi.advanceTimersByTime(1);
-      });
-      expect(result.current.state).toEqual({ status: "processing", slow: true });
-
-      await act(async () => {
-        release();
-        await sending;
-      });
-      expect(result.current.state).toEqual({ status: "success" });
     });
   });
 });

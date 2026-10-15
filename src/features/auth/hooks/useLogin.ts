@@ -16,7 +16,7 @@ type UseLoginResult = {
   error: ApiError | null;
 };
 
-export function useLogin(): UseLoginResult {
+export const useLogin = (): UseLoginResult => {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [{ loading, error }, execute] = useAxios<LoginResponse, LoginInput, ApiErrorBody>(
@@ -41,4 +41,4 @@ export function useLogin(): UseLoginResult {
   const apiError = useMemo(() => (error ? mapApiError(error) : null), [error]);
 
   return { login, isLoading: loading, error: apiError };
-}
+};

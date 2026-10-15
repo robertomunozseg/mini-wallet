@@ -9,11 +9,10 @@ const rootReducer = combineReducers({
 
 export type RootState = ReturnType<typeof rootReducer>;
 
-// A new store per request/render tree: a module-level singleton would be shared between users
-// on the server.
-export function makeStore(preloadedState?: Partial<RootState>) {
-  return configureStore({ reducer: rootReducer, preloadedState });
-}
+// A function, not a ready-made store: a store created at module level would be shared by every
+// user on the server.
+export const makeStore = (preloadedState?: Partial<RootState>) =>
+  configureStore({ reducer: rootReducer, preloadedState });
 
 export type AppStore = ReturnType<typeof makeStore>;
 export type AppDispatch = AppStore["dispatch"];

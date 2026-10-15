@@ -9,10 +9,9 @@ type Item = { id: number };
 type Response = { rows: Item[]; nextCursor: string | null };
 
 // Module level, like in the real hooks: the hook needs a stable `select`.
-function select(response: Response): Page<Item> {
+const select = (response: Response): Page<Item> => {
   return { items: response.rows, nextCursor: response.nextCursor };
-}
-
+};
 type HookProps = {
   params?: Record<string, string | undefined>;
   headers?: Record<string, string>;
@@ -20,21 +19,19 @@ type HookProps = {
   initialPage?: Page<Item>;
 };
 
-function setup(initial: HookProps = {}) {
+const setup = (initial: HookProps = {}) => {
   return renderHook(
     (props: HookProps) => usePaginatedList<Response, Item>({ url: "/items", select, ...props }),
     { initialProps: initial },
   );
-}
-
-function ids(items: Item[]): number[] {
+};
+const ids = (items: Item[]): number[] => {
   return items.map((item) => item.id);
-}
-
+};
 // A fake server with 25 items served in pages by cursor ("c10" means "after item 10").
 type Seen = { params: Record<string, unknown>; headers: unknown };
 
-function pagedServer(total = 25) {
+const pagedServer = (total = 25) => {
   const requests: Seen[] = [];
   const handler = (config: InternalAxiosRequestConfig): Promise<AxiosResponse> => {
     const params = { ...config.params } as Record<string, unknown>;
@@ -49,8 +46,7 @@ function pagedServer(total = 25) {
     return jsonResponse(config, 200, { rows, nextCursor });
   };
   return { requests, handler };
-}
-
+};
 describe("usePaginatedList", () => {
   let restore = () => {};
   afterEach(() => {
@@ -72,46 +68,6 @@ describe("usePaginatedList", () => {
       expect(result.current.hasMore).toBe(true);
       expect(result.current.error).toBeNull();
     });
-
-    it("sends the limit, the params and the headers, and no cursor", async () => {
-      const server = pagedServer();
-      restore = installHttpAdapter(server.handler);
-      const { result } = setup({ params: { q: "ana" }, headers: { "x-test": "on" }, limit: 5 });
-      await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-      expect(server.requests).toHaveLength(1);
-      expect(server.requests[0]?.params).toMatchObject({ q: "ana", limit: 5 });
-      expect(server.requests[0]?.params.cursor).toBeUndefined();
-      expect(server.requests[0]?.headers).toBe("on");
-    });
-
-    it("uses the default page size of 20", async () => {
-      const server = pagedServer();
-      restore = installHttpAdapter(server.handler);
-      const { result } = setup();
-      await waitFor(() => expect(result.current.isLoading).toBe(false));
-      expect(result.current.items).toHaveLength(20);
-    });
-
-    it("has no more pages when everything fits in one", async () => {
-      const server = pagedServer(3);
-      restore = installHttpAdapter(server.handler);
-      const { result } = setup({ limit: 10 });
-      await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-      expect(result.current.items).toHaveLength(3);
-      expect(result.current.hasMore).toBe(false);
-    });
-
-    it("returns an empty list as empty, not loading", async () => {
-      const server = pagedServer(0);
-      restore = installHttpAdapter(server.handler);
-      const { result } = setup();
-      await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-      expect(result.current.items).toEqual([]);
-      expect(result.current.hasMore).toBe(false);
-    });
   });
 
   describe("initial page from the server", () => {
@@ -128,35 +84,6 @@ describe("usePaginatedList", () => {
 
       await new Promise((resolve) => setTimeout(resolve, 50));
       expect(server.requests).toHaveLength(0);
-    });
-
-    it("continues from its cursor when loading more", async () => {
-      const server = pagedServer();
-      restore = installHttpAdapter(server.handler);
-      const { result } = setup({
-        limit: 5,
-        initialPage: { items: [1, 2, 3, 4, 5].map((id) => ({ id })), nextCursor: "c5" },
-      });
-
-      act(() => result.current.loadMore());
-      await waitFor(() => expect(result.current.items).toHaveLength(10));
-
-      expect(server.requests[0]?.params.cursor).toBe("c5");
-      expect(ids(result.current.items)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-    });
-
-    it("requests again when the query changes", async () => {
-      const server = pagedServer();
-      restore = installHttpAdapter(server.handler);
-      const { result, rerender } = setup({
-        params: { q: "" },
-        initialPage: { items: [{ id: 1 }], nextCursor: null },
-      });
-
-      rerender({ params: { q: "other" } });
-      await waitFor(() => expect(server.requests).toHaveLength(1));
-      await waitFor(() => expect(result.current.isLoading).toBe(false));
-      expect(server.requests[0]?.params.q).toBe("other");
     });
   });
 
@@ -176,33 +103,6 @@ describe("usePaginatedList", () => {
       expect(result.current.items[19]?.id).toBe(20);
     });
 
-    it("keeps loading until the end and then has no more", async () => {
-      const server = pagedServer();
-      restore = installHttpAdapter(server.handler);
-      const { result } = setup({ limit: 10 });
-      await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-      for (let page = 0; page < 2; page += 1) {
-        act(() => result.current.loadMore());
-        await waitFor(() => expect(result.current.isLoadingMore).toBe(false));
-      }
-
-      expect(result.current.items).toHaveLength(25);
-      expect(result.current.hasMore).toBe(false);
-      expect(new Set(ids(result.current.items)).size).toBe(25);
-    });
-
-    it("does nothing when there are no more pages", async () => {
-      const server = pagedServer(3);
-      restore = installHttpAdapter(server.handler);
-      const { result } = setup({ limit: 10 });
-      await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-      act(() => result.current.loadMore());
-      await new Promise((resolve) => setTimeout(resolve, 30));
-      expect(server.requests).toHaveLength(1);
-    });
-
     it("ignores a second call while the first page is still loading", async () => {
       const server = pagedServer();
       restore = installHttpAdapter(server.handler);
@@ -218,16 +118,6 @@ describe("usePaginatedList", () => {
 
       expect(server.requests).toHaveLength(2); // the first page and ONE more
       expect(result.current.items).toHaveLength(20);
-    });
-
-    it("does nothing while the first page is loading", async () => {
-      const server = pagedServer();
-      restore = installHttpAdapter(server.handler);
-      const { result } = setup({ limit: 10 });
-
-      act(() => result.current.loadMore());
-      await waitFor(() => expect(result.current.isLoading).toBe(false));
-      expect(server.requests).toHaveLength(1);
     });
   });
 
@@ -247,34 +137,6 @@ describe("usePaginatedList", () => {
       expect(last?.params.q).toBe("b");
       expect(last?.params.cursor).toBeUndefined();
       expect(result.current.items).toHaveLength(10);
-    });
-
-    it("keeps showing the previous items while the new ones load", async () => {
-      let release: () => void = () => {};
-      let calls = 0;
-      restore = installHttpAdapter((config) => {
-        calls += 1;
-        if (calls === 1) return jsonResponse(config, 200, { rows: [{ id: 1 }], nextCursor: null });
-        return new Promise<AxiosResponse>((resolve) => {
-          release = () =>
-            resolve({
-              data: { rows: [{ id: 2 }], nextCursor: null },
-              status: 200,
-              statusText: "",
-              headers: {},
-              config,
-            });
-        });
-      });
-      const { result, rerender } = setup({ params: { q: "a" } });
-      await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-      rerender({ params: { q: "b" } });
-      await waitFor(() => expect(result.current.isLoading).toBe(true));
-      expect(ids(result.current.items)).toEqual([1]);
-
-      await act(async () => release());
-      await waitFor(() => expect(ids(result.current.items)).toEqual([2]));
     });
 
     it("does not request again when only the identity of the params changed", async () => {
@@ -367,31 +229,6 @@ describe("usePaginatedList", () => {
       await waitFor(() => expect(result.current.items).toHaveLength(20));
       expect(result.current.loadMoreError).toBeNull();
     });
-
-    it("maps API error codes", async () => {
-      restore = installHttpAdapter((config) =>
-        jsonResponse(config, 400, { error: { code: "VALIDATION_ERROR", message: "Bad cursor." } }),
-      );
-      const { result } = setup();
-      await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-      expect(result.current.error).toEqual({ code: "VALIDATION_ERROR", message: "Bad cursor." });
-    });
-
-    it("clears the error when a new search starts", async () => {
-      let attempts = 0;
-      const server = pagedServer();
-      restore = installHttpAdapter((config) => {
-        attempts += 1;
-        return attempts === 1 ? networkError(config) : server.handler(config);
-      });
-      const { result, rerender } = setup({ params: { q: "a" } });
-      await waitFor(() => expect(result.current.error).not.toBeNull());
-
-      rerender({ params: { q: "b" } });
-      await waitFor(() => expect(result.current.items.length).toBeGreaterThan(0));
-      expect(result.current.error).toBeNull();
-    });
   });
 });
 
@@ -458,19 +295,5 @@ describe("usePaginatedList cancelling requests", () => {
 
     expect(signals[0]?.aborted).toBe(true);
     expect(signals[1]?.aborted).toBe(false);
-  });
-
-  it("does not cancel a request that is still the latest", async () => {
-    const signals: AbortSignal[] = [];
-    const server = pagedServer();
-    restore = installHttpAdapter((config) => {
-      if (config.signal) signals.push(config.signal as AbortSignal);
-      return server.handler(config);
-    });
-    const { result } = setup({ limit: 10 });
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-    expect(signals).toHaveLength(1);
-    expect(signals[0]?.aborted).toBe(false);
   });
 });

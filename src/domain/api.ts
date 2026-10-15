@@ -31,8 +31,8 @@ export type Scenario = (typeof SCENARIOS)[number];
 //   virtualization. It only affects reads; creating contacts or transfers still uses the real data.
 export type ListScenario = "empty" | "error" | "large";
 
-// Used by the API (header value) and by the Home page (?scenario= query param).
-export function parseListScenario(value: string | null | undefined): ListScenario | null {
+// Used by the API (header value) and by the Home page (?scenario= in the URL).
+export const parseListScenario = (value: string | null | undefined): ListScenario | null => {
   const text = value?.trim();
   return text === "empty" || text === "error" || text === "large" ? text : null;
-}
+};

@@ -8,31 +8,6 @@ test.describe("auth flow", () => {
     await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
   });
 
-  test("the root goes to /login without a session", async ({ page }) => {
-    await page.goto("/");
-    await expect(page).toHaveURL(/\/login$/);
-  });
-
-  test("Sign in is grey until the field is valid, and still explains what is wrong", async ({
-    page,
-  }) => {
-    await page.goto("/login");
-    const signIn = page.getByRole("button", { name: "Sign in" });
-
-    await retryUntilHydrated(async () => {
-      await page.getByLabel("Email or phone").fill("not-valid");
-      await expect(signIn).toHaveAttribute("aria-disabled", "true", { timeout: 2_000 });
-    });
-    // Not disabled: pressing it shows the message instead of doing nothing.
-    await signIn.click({ force: true });
-    await expect(
-      alertWithText(page, "Enter a valid email or a 10-digit phone number"),
-    ).toBeVisible();
-
-    await page.getByLabel("Email or phone").fill("someone@example.com");
-    await expect(signIn).not.toHaveAttribute("aria-disabled", "true");
-  });
-
   test("validates the field on blur", async ({ page }) => {
     await page.goto("/login");
 

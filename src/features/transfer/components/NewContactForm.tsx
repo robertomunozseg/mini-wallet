@@ -11,7 +11,7 @@ type NewContactFormProps = {
   onCancel: () => void;
 };
 
-export function NewContactForm({ onCreated, onCancel }: NewContactFormProps) {
+export const NewContactForm = ({ onCreated, onCancel }: NewContactFormProps) => {
   const form = useNewContactForm({ onCreated });
 
   return (
@@ -63,4 +63,4 @@ export function NewContactForm({ onCreated, onCancel }: NewContactFormProps) {
       </form>
     </Card>
   );
-}
+};

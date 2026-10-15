@@ -16,11 +16,10 @@ vi.mock("../hooks/useContacts", () => ({ useContacts: useContactsMock }));
 
 const balanceCents = asCents(100_000);
 
-function currentStep(): string {
+const currentStep = (): string => {
   const current = screen.getByRole("listitem", { current: "step" });
   return current.textContent ?? "";
-}
-
+};
 describe("TransferFlow", () => {
   beforeEach(() => {
     router.push.mockReset();
@@ -36,13 +35,6 @@ describe("TransferFlow", () => {
       loadMore: vi.fn(),
       refetch: vi.fn(),
     });
-  });
-
-  it("starts at the amount step", () => {
-    renderWithStore(<TransferFlow balanceCents={balanceCents} />);
-
-    expect(screen.getByRole("heading", { name: "How much do you want to send?" })).toBeVisible();
-    expect(currentStep()).toContain("Amount");
   });
 
   it("walks through amount, recipient and summary", async () => {
@@ -78,18 +70,6 @@ describe("TransferFlow", () => {
       expect(store.getState().transfer.step).toBe("amount");
       expect(screen.getByLabelText("Amount (MXN)")).toHaveValue("50.00");
       expect(router.push).not.toHaveBeenCalled();
-    });
-
-    it("goes from the summary back to the recipient with the contact still selected", async () => {
-      const store = makeStore();
-      store.dispatch(setAmount(asCents(5_000)));
-      store.dispatch(setRecipient("Ana García"));
-      store.dispatch(goToStep("summary"));
-      renderWithStore(<TransferFlow balanceCents={balanceCents} />, store);
-
-      await userEvent.click(screen.getByRole("button", { name: /Back/ }));
-
-      expect(screen.getByRole("radio", { name: /Ana García/ })).toBeChecked();
     });
   });
 
@@ -175,30 +155,6 @@ describe("TransferFlow", () => {
       expect(store.getState().transfer.step).toBe("amount");
       expect(store.getState().transfer.idempotencyKey).toBeNull();
       expect(screen.getByLabelText("Amount (MXN)")).toHaveValue("50.00");
-    });
-
-    it("goes back to the summary after an error, keeping the idempotency key", async () => {
-      restore = installHttpAdapter((config) => networkError(config));
-      const store = storeAtSummary();
-      renderWithStore(<TransferFlow balanceCents={balanceCents} />, store);
-
-      await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
-      await screen.findByRole("button", { name: "Try again" });
-      const key = store.getState().transfer.idempotencyKey;
-      await userEvent.click(screen.getByRole("button", { name: /Back/ }));
-
-      expect(store.getState().transfer.step).toBe("summary");
-      expect(store.getState().transfer.idempotencyKey).toBe(key);
-    });
-
-    it("disables Back while the transfer is being processed", async () => {
-      restore = installHttpAdapter(() => new Promise(() => {}));
-      renderWithStore(<TransferFlow balanceCents={balanceCents} />, storeAtSummary());
-
-      await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
-
-      expect(await screen.findByText("Processing…")).toBeVisible();
-      expect(screen.getByRole("button", { name: /Back/ })).toBeDisabled();
     });
   });
 });

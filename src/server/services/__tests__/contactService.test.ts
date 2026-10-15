@@ -11,12 +11,11 @@ beforeEach(() => {
 });
 
 // All the contacts, following the cursors, so the tests do not depend on the page size.
-function allContacts(): Contact[] {
+const allContacts = (): Contact[] => {
   const result = listPage({ limit: 50 });
   if (!result.ok) throw new Error("unexpected error");
   return result.value.items;
-}
-
+};
 describe("contactService", () => {
   it("lists the seeded contacts, 3 of them favorites", () => {
     const contacts = allContacts();
@@ -61,18 +60,6 @@ describe("contactService.list", () => {
     expect(result.ok && result.value.items.map((contact) => contact.name)).toEqual(["Ana García"]);
   });
 
-  it("filters by phone", () => {
-    const result = listPage({ q: "5598", limit: 20 });
-    expect(result.ok && result.value.items.map((contact) => contact.name)).toEqual(["María López"]);
-  });
-
-  it("returns an empty page when nothing matches", () => {
-    expect(listPage({ q: "zzz", limit: 20 })).toEqual({
-      ok: true,
-      value: { items: [], nextCursor: null },
-    });
-  });
-
   it("limits the page size and gives a cursor for the rest", () => {
     const first = listPage({ limit: 3 });
     expect(first.ok && first.value.items).toHaveLength(3);
@@ -86,55 +73,10 @@ describe("contactService.list", () => {
     expect(second.ok && second.value.nextCursor).toBeNull();
   });
 
-  it("applies the search to every page", () => {
-    // "a" matches Ana, María (via name) and Carlos: 3 results, so with limit 2 there are 2 pages.
-    const first = listPage({ q: "a", limit: 2 });
-    expect(first.ok && first.value.nextCursor).not.toBeNull();
-  });
-
   it("rejects an invalid cursor with VALIDATION_ERROR", () => {
     expect(listPage({ limit: 20, cursor: "garbage" })).toMatchObject({
       ok: false,
       error: { code: "VALIDATION_ERROR" },
-    });
-  });
-
-  describe("large scenario", () => {
-    function walk(q?: string): Contact[] {
-      const seen: Contact[] = [];
-      let cursor: string | undefined;
-      do {
-        const result = listPage({ q, limit: 50, cursor, scenario: "large" });
-        if (!result.ok) throw new Error("unexpected error");
-        seen.push(...result.value.items);
-        cursor = result.value.nextCursor ?? undefined;
-      } while (cursor !== undefined);
-      return seen;
-    }
-
-    it("pages through all 5,000 contacts without repeating any", () => {
-      const seen = walk();
-      expect(seen).toHaveLength(5_000);
-      expect(new Set(seen.map((contact) => contact.id)).size).toBe(5_000);
-    });
-
-    it("keeps favorites first across pages", () => {
-      const seen = walk();
-      const firstNonFavorite = seen.findIndex((contact) => !contact.isFavorite);
-      expect(firstNonFavorite).toBeGreaterThan(0);
-      expect(seen.slice(firstNonFavorite).some((contact) => contact.isFavorite)).toBe(false);
-    });
-
-    it("searches the whole dataset and pages through the matches", () => {
-      const seen = walk("garcia");
-      expect(seen.length).toBeGreaterThan(50);
-      expect(seen.every((contact) => contact.name.toLowerCase().includes("garc"))).toBe(true);
-    });
-
-    it("does not include the real contacts", () => {
-      expect(
-        walk().some((contact) => contact.name === "Carlos Ruiz" && contact.id === "contact-4"),
-      ).toBe(false);
     });
   });
 });

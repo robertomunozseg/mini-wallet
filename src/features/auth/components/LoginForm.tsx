@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import type { IdentifierType } from "@/domain/identifier";
+import type { IdentifierType } from "@/domain/schemas";
 import { useLoginForm } from "../hooks/useLoginForm";
 
 const INPUT_MODE_BY_TYPE = {
@@ -11,7 +11,7 @@ const INPUT_MODE_BY_TYPE = {
   unknown: "text",
 } as const satisfies Record<IdentifierType, "email" | "tel" | "text">;
 
-export function LoginForm() {
+export const LoginForm = () => {
   const form = useLoginForm();
 
   return (
@@ -38,4 +38,4 @@ export function LoginForm() {
       </Button>
     </form>
   );
-}
+};

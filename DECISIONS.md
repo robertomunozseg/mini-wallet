@@ -67,9 +67,9 @@ Me detuve ahí: sin base de datos ni capa de caché.
 
 - Etiquetas en los campos, errores con `role="alert"`, teclado completo y un enlace para saltar al contenido.
 - Los botones de un formulario incompleto se ven grises pero siguen mostrando qué falta al pulsarlos.
-- Una revisión con axe corre en cada pantalla dentro de los e2e.
+- Una revisión con axe corre en el login, el Home y el resumen dentro de los e2e.
 - La lista se desplaza por dentro y la página no, incluso en una laptop con escala del 150 %.
 
 ## 10. Con más tiempo
 
-Base de datos real, autenticación real, observabilidad, traducciones, React Query o RTK Query, límite de peticiones y feature flags.
+Base de datos real, autenticación real, observabilidad, traducciones, React Query o RTK Query, límite de peticiones, feature flags, react hook form o formik.

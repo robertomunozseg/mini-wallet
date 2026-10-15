@@ -9,7 +9,7 @@ import {
 export { SCENARIOS };
 export type { Scenario };
 
-// Relative weights: success 60%, every other scenario 10%.
+// Chances for each scenario: success 60%, every other one 10%.
 const WEIGHTS: Record<Scenario, number> = {
   success: 60,
   network_error: 10,
@@ -18,16 +18,15 @@ const WEIGHTS: Record<Scenario, number> = {
   unknown_error: 10,
 };
 
-function isScenario(value: string | null): value is Scenario {
-  return SCENARIOS.some((scenario) => scenario === value);
-}
+const isScenario = (value: string | null): value is Scenario =>
+  SCENARIOS.some((scenario) => scenario === value);
 
-// A valid x-mock-scenario header forces the scenario (used by tests and demos).
-// Otherwise one is picked at random. `random` is injectable to keep this testable.
-export function resolveScenario(
+// The x-mock-scenario header forces a scenario (tests and demos use it). Without it, one is
+// picked at random. `random` can be replaced so the draw is testable.
+export const resolveScenario = (
   request: Pick<Request, "headers">,
   random: () => number = Math.random,
-): Scenario {
+): Scenario => {
   const forced = request.headers.get(SCENARIO_HEADER)?.trim() ?? null;
   if (isScenario(forced)) return forced;
 
@@ -38,8 +37,7 @@ export function resolveScenario(
     if (roll < 0) return scenario;
   }
   return "success";
-}
+};
 
-export function resolveListScenario(request: Pick<Request, "headers">): ListScenario | null {
-  return parseListScenario(request.headers.get(SCENARIO_HEADER));
-}
+export const resolveListScenario = (request: Pick<Request, "headers">): ListScenario | null =>
+  parseListScenario(request.headers.get(SCENARIO_HEADER));

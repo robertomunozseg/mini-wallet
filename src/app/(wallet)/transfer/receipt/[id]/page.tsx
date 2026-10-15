@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { ReceiptView } from "@/features/transfer/components/ReceiptView";
-import { getReceipt } from "@/server/services/receiptService";
+import { getReceipt } from "@/server/services/transactionService";
 import { getSession } from "@/server/session";
 
 export const metadata: Metadata = { title: "Receipt" };

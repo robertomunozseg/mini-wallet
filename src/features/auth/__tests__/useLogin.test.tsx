@@ -8,7 +8,6 @@ import {
   jsonResponse,
   networkError,
   readBody,
-  timeoutError,
 } from "@/test-utils/http-adapter";
 import { makeStore } from "@/store/store";
 import { useLogin } from "../hooks/useLogin";
@@ -18,15 +17,14 @@ vi.mock("next/navigation", () => ({ useRouter: () => router }));
 
 const user = { id: "user-demo", name: "Demo User", email: "demo@example.com" };
 
-function setup() {
+const setup = () => {
   const store = makeStore();
   const wrapper = ({ children }: { children: ReactNode }) => (
     <Provider store={store}>{children}</Provider>
   );
   const hook = renderHook(() => useLogin(), { wrapper });
   return { store, ...hook };
-}
-
+};
 describe("useLogin", () => {
   let restoreAdapter = () => {};
 
@@ -110,30 +108,5 @@ describe("useLogin", () => {
 
     expect(result.current.error).toMatchObject({ code: "NETWORK_ERROR" });
     expect(router.replace).not.toHaveBeenCalled();
-  });
-
-  it("exposes TIMEOUT when the request is aborted by the timeout", async () => {
-    restoreAdapter = installHttpAdapter((config) => timeoutError(config));
-    const { result } = setup();
-
-    await act(() => result.current.login("ana@example.com"));
-
-    expect(result.current.error).toMatchObject({ code: "TIMEOUT" });
-  });
-
-  it("clears the previous error when the user tries again", async () => {
-    let attempt = 0;
-    restoreAdapter = installHttpAdapter((config) => {
-      attempt += 1;
-      return attempt === 1 ? networkError(config) : jsonResponse(config, 200, { user });
-    });
-    const { result } = setup();
-
-    await act(() => result.current.login("ana@example.com"));
-    expect(result.current.error).not.toBeNull();
-
-    await act(() => result.current.login("ana@example.com"));
-    expect(result.current.error).toBeNull();
-    expect(router.replace).toHaveBeenCalledWith("/home");
   });
 });

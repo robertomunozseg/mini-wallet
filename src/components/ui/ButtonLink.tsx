@@ -7,6 +7,6 @@ type ButtonLinkProps = ComponentProps<typeof Link> & {
 };
 
 // A real link (navigates, opens in a new tab, etc.) styled as a button.
-export function ButtonLink({ variant = "primary", className, ...rest }: ButtonLinkProps) {
+export const ButtonLink = ({ variant = "primary", className, ...rest }: ButtonLinkProps) => {
   return <Link {...rest} className={buttonClassName(variant, className)} />;
-}
+};

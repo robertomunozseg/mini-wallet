@@ -9,9 +9,8 @@ type ContactGroupProps = {
   onSelect: (contact: Contact) => void;
 };
 
-// A group of contacts as radio buttons: native keyboard support (arrows) and screen reader labels.
-// memo: while the user types in the search box the parent re-renders on every key, but the group
-// keeps the same props until the debounced search brings a new list, so it is skipped.
+// Contacts as radio buttons: arrow keys and screen readers work for free. memo: the parent
+// re-renders on every key typed, but the group keeps its props until the debounced search ends.
 export const ContactGroup = memo(function ContactGroup({
   title,
   contacts,

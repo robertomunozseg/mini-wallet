@@ -5,7 +5,7 @@ type StepIndicatorProps = {
   currentIndex: number;
 };
 
-export function StepIndicator({ steps, currentIndex }: StepIndicatorProps) {
+export const StepIndicator = ({ steps, currentIndex }: StepIndicatorProps) => {
   return (
     <nav aria-label="Transfer progress">
       <ol className="flex items-center gap-2">
@@ -44,4 +44,4 @@ export function StepIndicator({ steps, currentIndex }: StepIndicatorProps) {
       </ol>
     </nav>
   );
-}
+};

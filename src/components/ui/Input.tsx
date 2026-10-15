@@ -6,7 +6,7 @@ type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "id"> & {
   error?: string;
 };
 
-export function Input({ label, error, className, ...rest }: InputProps) {
+export const Input = ({ label, error, className, ...rest }: InputProps) => {
   const id = useId();
   const errorId = `${id}-error`;
 
@@ -34,4 +34,4 @@ export function Input({ label, error, className, ...rest }: InputProps) {
       )}
     </div>
   );
-}
+};

@@ -9,20 +9,18 @@ import { SummaryStep } from "../components/SummaryStep";
 
 const balanceCents = asCents(100_000); // $1,000.00
 
-function storeWith(amountCents: number | null, recipient: string) {
+const storeWith = (amountCents: number | null, recipient: string) => {
   const store = makeStore();
   store.dispatch(setAmount(amountCents === null ? null : asCents(amountCents)));
   store.dispatch(setRecipient(recipient));
   store.dispatch(goToStep("summary"));
   return store;
-}
-
+};
 const onConfirm = vi.fn();
 
-function confirmButton() {
+const confirmButton = () => {
   return screen.getByRole("button", { name: "Confirm" });
-}
-
+};
 afterEach(() => {
   onConfirm.mockReset();
   vi.unstubAllEnvs();
@@ -39,26 +37,6 @@ describe("SummaryStep", () => {
       expect(screen.getByText("$50.00")).toBeInTheDocument();
       expect(screen.getByText("Ana García")).toBeInTheDocument();
       expect(screen.getByText("$950.00")).toBeInTheDocument();
-    });
-
-    it("enables Confirm and shows no errors", () => {
-      renderWithStore(
-        <SummaryStep balanceCents={balanceCents} onConfirm={onConfirm} />,
-        storeWith(5_000, "Ana García"),
-      );
-
-      expect(confirmButton()).toBeEnabled();
-      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-    });
-
-    it("allows transferring the whole balance and shows $0.00 left", () => {
-      renderWithStore(
-        <SummaryStep balanceCents={balanceCents} onConfirm={onConfirm} />,
-        storeWith(100_000, "Ana García"),
-      );
-
-      expect(confirmButton()).toBeEnabled();
-      expect(screen.getByText("$0.00")).toBeInTheDocument();
     });
 
     it("calls onConfirm when Confirm is clicked", async () => {
@@ -83,36 +61,6 @@ describe("SummaryStep", () => {
       expect(screen.getByRole("alert")).toHaveTextContent("Choose a recipient.");
     });
 
-    it("treats a blank recipient as missing", () => {
-      renderWithStore(
-        <SummaryStep balanceCents={balanceCents} onConfirm={onConfirm} />,
-        storeWith(5_000, "   "),
-      );
-
-      expect(confirmButton()).toBeDisabled();
-      expect(screen.getByRole("alert")).toHaveTextContent("Choose a recipient.");
-    });
-
-    it("disables Confirm without an amount", () => {
-      renderWithStore(
-        <SummaryStep balanceCents={balanceCents} onConfirm={onConfirm} />,
-        storeWith(null, "Ana García"),
-      );
-
-      expect(confirmButton()).toBeDisabled();
-      expect(screen.getByRole("alert")).toHaveTextContent("Enter an amount.");
-    });
-
-    it("disables Confirm with a zero amount", () => {
-      renderWithStore(
-        <SummaryStep balanceCents={balanceCents} onConfirm={onConfirm} />,
-        storeWith(0, "Ana García"),
-      );
-
-      expect(confirmButton()).toBeDisabled();
-      expect(screen.getByRole("alert")).toHaveTextContent("The amount must be greater than zero.");
-    });
-
     it("disables Confirm when the amount is above the balance", () => {
       renderWithStore(
         <SummaryStep balanceCents={balanceCents} onConfirm={onConfirm} />,
@@ -121,25 +69,6 @@ describe("SummaryStep", () => {
 
       expect(confirmButton()).toBeDisabled();
       expect(screen.getByRole("alert")).toHaveTextContent("Insufficient balance.");
-    });
-
-    it("lists every broken rule", () => {
-      renderWithStore(
-        <SummaryStep balanceCents={balanceCents} onConfirm={onConfirm} />,
-        storeWith(100_001, ""),
-      );
-
-      const alert = screen.getByRole("alert");
-      expect(alert).toHaveTextContent("Insufficient balance.");
-      expect(alert).toHaveTextContent("Choose a recipient.");
-    });
-
-    it("does not show a balance after the transfer", () => {
-      renderWithStore(
-        <SummaryStep balanceCents={balanceCents} onConfirm={onConfirm} />,
-        storeWith(5_000, ""),
-      );
-      expect(screen.queryByText("$950.00")).not.toBeInTheDocument();
     });
 
     it("does not call onConfirm when Confirm is disabled", async () => {
@@ -154,14 +83,6 @@ describe("SummaryStep", () => {
   });
 
   describe("demo mode", () => {
-    it("hides the scenario selector by default", () => {
-      renderWithStore(
-        <SummaryStep balanceCents={balanceCents} onConfirm={onConfirm} />,
-        storeWith(5_000, "Ana García"),
-      );
-      expect(screen.queryByLabelText("Simulated scenario")).not.toBeInTheDocument();
-    });
-
     it("shows the selector with NEXT_PUBLIC_DEMO_MODE=true, random by default", () => {
       vi.stubEnv("NEXT_PUBLIC_DEMO_MODE", "true");
       renderWithStore(

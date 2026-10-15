@@ -6,7 +6,7 @@ type EmptyStateProps = {
   action?: ReactNode;
 };
 
-export function EmptyState({ title, description, action }: EmptyStateProps) {
+export const EmptyState = ({ title, description, action }: EmptyStateProps) => {
   return (
     <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
       <p className="text-lg font-semibold text-zinc-900">{title}</p>
@@ -14,4 +14,4 @@ export function EmptyState({ title, description, action }: EmptyStateProps) {
       {action && <div className="mt-2">{action}</div>}
     </div>
   );
-}
+};

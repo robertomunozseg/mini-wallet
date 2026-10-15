@@ -1,12 +1,12 @@
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Card } from "@/components/ui/Card";
-import { formatDateTime } from "@/domain/format-date";
+import { formatDateTime } from "@/domain/dates";
 import { formatMoney } from "@/domain/money";
 import type { Receipt } from "@/domain/types";
 
 type ReceiptViewProps = { receipt: Receipt };
 
-export function ReceiptView({ receipt }: ReceiptViewProps) {
+export const ReceiptView = ({ receipt }: ReceiptViewProps) => {
   const { transaction, newBalanceCents } = receipt;
 
   return (
@@ -49,4 +49,4 @@ export function ReceiptView({ receipt }: ReceiptViewProps) {
       </div>
     </div>
   );
-}
+};

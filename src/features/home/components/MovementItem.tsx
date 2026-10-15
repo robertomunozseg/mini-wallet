@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { formatMoney } from "@/domain/money";
-import { formatRelativeTime } from "@/domain/relative-time";
+import { formatRelativeTime } from "@/domain/dates";
 import type { Movement, MovementStatus } from "@/domain/types";
 import { classNames } from "@/lib/class-names";
 
@@ -18,9 +18,8 @@ const STATUS_LABELS: Record<Exclude<MovementStatus, "completed">, string> = {
   failed: "Failed",
 };
 
-// memo: while the user scrolls, the list re-renders on every frame, but a row only re-renders
-// when its own props change. The props are primitives and the same `movement` object, so the
-// rows that stay on screen are skipped.
+// memo: while scrolling, the list re-renders on every frame, but a row only re-renders when
+// its own props change (they are primitives and the same movement object).
 export const MovementItem = memo(function MovementItem({
   movement,
   offsetTop,

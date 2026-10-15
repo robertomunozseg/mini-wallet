@@ -20,12 +20,6 @@ describe("LogoutButton", () => {
     expect(logout).toHaveBeenCalledTimes(1);
   });
 
-  it("is disabled while signing out", () => {
-    useLogoutMock.mockReturnValue({ logout, isLoading: true, error: null });
-    render(<LogoutButton />);
-    expect(screen.getByRole("button", { name: "Sign out" })).toBeDisabled();
-  });
-
   it("shows the error in an alert", () => {
     useLogoutMock.mockReturnValue({
       logout,

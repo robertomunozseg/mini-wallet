@@ -16,7 +16,7 @@ type UseNewContactFormOptions = {
 };
 
 // Form state, validation (newContactSchema) and the POST /contacts request for NewContactForm.
-export function useNewContactForm({ onCreated }: UseNewContactFormOptions) {
+export const useNewContactForm = ({ onCreated }: UseNewContactFormOptions) => {
   const [name, setName] = useState("");
   const [phoneOrEmail, setPhoneOrEmail] = useState("");
   const [isFavorite, setIsFavorite] = useState(false);
@@ -47,11 +47,11 @@ export function useNewContactForm({ onCreated }: UseNewContactFormOptions) {
 
   const apiError: ApiError | null = useMemo(() => (error ? mapApiError(error) : null), [error]);
 
-  function touch(field: Field) {
+  const touch = (field: Field) => {
     setTouched((current) => ({ ...current, [field]: true }));
-  }
+  };
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
+  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setTouched({ name: true, phoneOrEmail: true });
     if (!validation.success || loading) return;
@@ -62,7 +62,7 @@ export function useNewContactForm({ onCreated }: UseNewContactFormOptions) {
     } catch {
       // The failure is exposed through `apiError`.
     }
-  }
+  };
 
   return {
     name,
@@ -80,4 +80,4 @@ export function useNewContactForm({ onCreated }: UseNewContactFormOptions) {
     onPhoneOrEmailBlur: () => touch("phoneOrEmail"),
     onSubmit,
   };
-}
+};

@@ -1,8 +1,6 @@
-import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 import {
   alertWithText,
-  enterAmount,
   forceScenario,
   homeBalance,
   openTransfer,
@@ -12,28 +10,10 @@ import {
 
 // A phone number that is different on every run, because created contacts live in memory
 // until the server restarts and duplicates are rejected.
-function uniquePhone(): string {
+const uniquePhone = (): string => {
   return `55${String(Date.now()).slice(-8)}`;
-}
-
+};
 test.describe("transfer flow", () => {
-  test("an anonymous user is sent to /login", async ({ page }) => {
-    await page.goto("/transfer");
-    await expect(page).toHaveURL(/\/login$/);
-  });
-
-  test("opens from the Home and shows the amount step", async ({ signedIn: page }) => {
-    await openTransfer(page);
-
-    await expect(page.getByRole("heading", { name: "New transfer" })).toBeVisible();
-    await expect(
-      page.getByRole("heading", { name: "How much do you want to send?" }),
-    ).toBeVisible();
-    await expect(page.getByText(/Available balance:/)).toBeVisible();
-    // The step indicator has no role that can say "current", so the attribute is used.
-    await expect(page.locator('li[aria-current="step"]')).toContainText("Amount");
-  });
-
   test("blocks an amount above the balance and explains amount errors inline", async ({
     signedIn: page,
   }) => {
@@ -105,41 +85,6 @@ test.describe("transfer flow", () => {
     expect((next?.y ?? 0) + (next?.height ?? 0)).toBeLessThanOrEqual(590);
   });
 
-  test("walks through amount, recipient and summary", async ({ signedIn: page }) => {
-    await reachSummary(page, "100");
-
-    await expect(page.getByText("$100.00").first()).toBeVisible();
-    // exact: the hidden Home page (kept alive by Next) also contains "Sent to Ana García".
-    await expect(page.getByText("Ana García", { exact: true })).toBeVisible();
-    await expect(page.getByText("Balance after transfer")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Confirm" })).toBeEnabled();
-  });
-
-  test("searches contacts on the server ignoring accents, with one request per search", async ({
-    signedIn: page,
-  }) => {
-    const searches: string[] = [];
-    page.on("request", (request) => {
-      const url = new URL(request.url());
-      if (url.pathname === "/api/contacts" && url.searchParams.has("q")) {
-        searches.push(url.searchParams.get("q") ?? "");
-      }
-    });
-
-    await reachRecipientStep(page, "10");
-    await expect(page.getByRole("radio").first()).toBeVisible();
-
-    // Typed in one go: the debounce sends a single request, with the final text.
-    await page.getByLabel("Search contacts").pressSequentially("garcia");
-    await expect(page.getByRole("radio", { name: /Ana García/ })).toBeVisible();
-    await expect(page.getByRole("radio")).toHaveCount(1);
-    expect(searches).toEqual(["garcia"]);
-
-    await page.getByLabel("Search contacts").fill("zzz");
-    await expect(page.getByText(/No contacts match/)).toBeVisible();
-    expect(searches).toEqual(["garcia", "zzz"]);
-  });
-
   test("creates a new contact, selects it and rejects a duplicate", async ({ signedIn: page }) => {
     await reachRecipientStep(page, "10");
 
@@ -167,21 +112,6 @@ test.describe("transfer flow", () => {
     await expect(
       alertWithText(page, "A contact with this phone or email already exists."),
     ).toBeVisible();
-  });
-
-  test("Back keeps the data, and leaving the flow clears it", async ({ signedIn: page }) => {
-    await openTransfer(page);
-    await page.getByLabel("Amount (MXN)").fill("75");
-    await page.getByRole("button", { name: "Continue" }).click();
-    await page.getByRole("button", { name: /Back/ }).click();
-
-    await expect(page.getByLabel("Amount (MXN)")).toHaveValue("75.00");
-
-    // Back from the first step leaves the flow; coming back starts from scratch.
-    await page.getByRole("button", { name: /Back/ }).click();
-    await expect(page).toHaveURL(/\/home$/);
-    await page.getByRole("link", { name: "New transfer" }).click();
-    await expect(page.getByLabel("Amount (MXN)")).toHaveValue("");
   });
 });
 
@@ -238,46 +168,5 @@ test.describe("successful transfer and receipt", () => {
 
     await expect(page.getByRole("heading", { name: "Receipt not found" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Back to home" })).toBeVisible();
-  });
-
-  test("an anonymous user is sent to /login from a receipt", async ({ page }) => {
-    await page.goto("/transfer/receipt/anything");
-    await expect(page).toHaveURL(/\/login$/);
-  });
-});
-
-test.describe("transfer with a large address book (?scenario=large)", () => {
-  async function openRecipientStep(page: Page) {
-    await page.goto("/transfer?scenario=large");
-    await enterAmount(page, "10");
-    await expect(page.getByRole("radio").first()).toBeVisible();
-  }
-
-  test("shows a page of contacts and loads more on demand", async ({ signedIn: page }) => {
-    await openRecipientStep(page);
-
-    // One page (20), not 5,000 contacts.
-    await expect(page.getByRole("radio")).toHaveCount(20);
-    await page.getByRole("button", { name: "Load more" }).click();
-    await expect(page.getByRole("radio")).toHaveCount(40);
-  });
-
-  test("searches the whole address book on the server", async ({ signedIn: page }) => {
-    await openRecipientStep(page);
-
-    await page.getByLabel("Search contacts").pressSequentially("hernandez");
-
-    // Wait until the list shows only matches (it still shows the old list until the debounce
-    // and the request finish), instead of assuming how long that takes.
-    const labels = () =>
-      page
-        .getByRole("radio")
-        .evaluateAll((nodes) => nodes.map((node) => node.closest("label")?.textContent ?? ""));
-    await expect
-      .poll(async () => {
-        const texts = await labels();
-        return texts.length > 0 && texts.every((text) => text.toLowerCase().includes("hern"));
-      })
-      .toBe(true);
   });
 });

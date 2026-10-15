@@ -7,7 +7,7 @@ const SESSION_MAX_AGE_SECONDS = 60 * 60 * 8;
 
 type Session = { user: User };
 
-export async function createSession(): Promise<void> {
+export const createSession = async (): Promise<void> => {
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, MOCK_SESSION_TOKEN, {
     httpOnly: true,
@@ -16,15 +16,15 @@ export async function createSession(): Promise<void> {
     path: "/",
     maxAge: SESSION_MAX_AGE_SECONDS,
   });
-}
+};
 
-export async function clearSession(): Promise<void> {
+export const clearSession = async (): Promise<void> => {
   const cookieStore = await cookies();
   cookieStore.delete(SESSION_COOKIE);
-}
+};
 
-export async function getSession(): Promise<Session | null> {
+export const getSession = async (): Promise<Session | null> => {
   const cookieStore = await cookies();
   if (!isValidSessionToken(cookieStore.get(SESSION_COOKIE)?.value)) return null;
   return { user: getUser() };
-}
+};

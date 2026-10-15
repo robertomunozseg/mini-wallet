@@ -6,7 +6,6 @@ import { SCENARIOS } from "@/domain/api";
 import { formatMoney, subtractCents } from "@/domain/money";
 import { TRANSFER_ERROR_MESSAGES } from "@/domain/transfer-rules";
 import type { Cents } from "@/domain/types";
-import { isDemoMode } from "@/lib/demo-mode";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   selectAmountCents,
@@ -17,6 +16,10 @@ import {
   type DemoScenario,
 } from "@/store/slices/transferSlice";
 
+// With NEXT_PUBLIC_DEMO_MODE=true the summary shows a selector to force a scenario.
+// A function, so the variable is read when the component renders (tests change it).
+const isDemoMode = () => process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+
 type SummaryStepProps = {
   balanceCents: Cents;
   onConfirm: () => void;
@@ -24,11 +27,10 @@ type SummaryStepProps = {
 
 const DEMO_OPTIONS: readonly DemoScenario[] = ["random", ...SCENARIOS];
 
-function isDemoScenario(value: string): value is DemoScenario {
+const isDemoScenario = (value: string): value is DemoScenario => {
   return DEMO_OPTIONS.some((option) => option === value);
-}
-
-export function SummaryStep({ balanceCents, onConfirm }: SummaryStepProps) {
+};
+export const SummaryStep = ({ balanceCents, onConfirm }: SummaryStepProps) => {
   const dispatch = useAppDispatch();
   const amountCents = useAppSelector(selectAmountCents);
   const recipient = useAppSelector(selectRecipient);
@@ -99,4 +101,4 @@ export function SummaryStep({ balanceCents, onConfirm }: SummaryStepProps) {
       </Button>
     </div>
   );
-}
+};

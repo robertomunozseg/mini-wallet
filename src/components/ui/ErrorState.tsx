@@ -7,12 +7,12 @@ type ErrorStateProps = {
   retryLabel?: string;
 };
 
-export function ErrorState({
+export const ErrorState = ({
   message,
   title = "Something went wrong",
   onRetry,
   retryLabel = "Try again",
-}: ErrorStateProps) {
+}: ErrorStateProps) => {
   return (
     <div role="alert" className="flex flex-col items-center gap-2 px-4 py-8 text-center">
       <p className="text-lg font-semibold text-red-800">{title}</p>
@@ -24,4 +24,4 @@ export function ErrorState({
       )}
     </div>
   );
-}
+};

@@ -13,6 +13,17 @@ const identifierSchema = z
     "Enter a valid email or a 10-digit phone number",
   );
 
+export type IdentifierType = "email" | "phone" | "unknown";
+
+// Guesses what the user is typing so the UI can adapt (e.g. the keyboard). It does not validate:
+// validation is done by loginSchema.
+export const detectIdentifierType = (value: string): IdentifierType => {
+  const text = value.trim();
+  if (text.includes("@")) return "email";
+  if (/^[\d\s-]+$/.test(text)) return "phone";
+  return "unknown";
+};
+
 export const loginSchema = z.object({
   identifier: identifierSchema,
 });

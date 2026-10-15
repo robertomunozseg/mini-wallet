@@ -9,7 +9,7 @@ type BalanceCardProps = {
   balanceCents: Cents;
 };
 
-export function BalanceCard({ name, balanceCents }: BalanceCardProps) {
+export const BalanceCard = ({ name, balanceCents }: BalanceCardProps) => {
   const headingId = useId();
 
   return (
@@ -27,4 +27,4 @@ export function BalanceCard({ name, balanceCents }: BalanceCardProps) {
       </ButtonLink>
     </Card>
   );
-}
+};

@@ -1,37 +1,28 @@
 import type { Cents } from "./types";
 
-// Plain digits ("1250.50") or thousands separated by commas ("1,250.50"), max 2 decimals.
+// "1250.50" or "1,250.50": digits, optional thousands commas and up to 2 decimals.
 const AMOUNT_PATTERN = /^(\d+|\d{1,3}(,\d{3})+)(\.\d{1,2})?$/;
 
-export function asCents(value: number): Cents {
-  return value as Cents;
-}
+export const asCents = (value: number): Cents => value as Cents;
 
-// Returns null when the text is not a valid non-negative amount. Zero is accepted here;
-// "amount must be > 0" is a transfer rule (see validateTransfer).
-export function toCents(input: string): Cents | null {
+// null when the text is not a valid amount. Zero is fine here: "greater than zero" is a
+// transfer rule (see validateTransfer).
+export const toCents = (input: string): Cents | null => {
   const text = input.trim().replace(/^\$/, "");
   if (!AMOUNT_PATTERN.test(text)) return null;
 
   const amount = Number(text.replace(/,/g, ""));
-  // Math.round avoids floating point errors such as 1.15 * 100 = 114.99999999999999.
+  // Math.round: 1.15 * 100 is 114.99999999999999 with floating point.
   const cents = Math.round(amount * 100);
   return Number.isSafeInteger(cents) ? asCents(cents) : null;
-}
+};
 
-export function fromCents(cents: Cents): number {
-  return cents / 100;
-}
+export const fromCents = (cents: Cents): number => cents / 100;
 
-// Plain text for an amount input ("1250.50"), e.g. to refill the field when coming back to a step.
-export function centsToInput(cents: Cents): string {
-  return fromCents(cents).toFixed(2);
-}
+// Text for an amount input ("1250.50"), to refill the field when the user comes back to a step.
+export const centsToInput = (cents: Cents): string => fromCents(cents).toFixed(2);
 
-export function subtractCents(a: Cents, b: Cents): Cents {
-  return asCents(a - b);
-}
+export const subtractCents = (a: Cents, b: Cents): Cents => asCents(a - b);
 
-export function formatMoney(cents: Cents, currency: "MXN" = "MXN"): string {
-  return new Intl.NumberFormat("es-MX", { style: "currency", currency }).format(fromCents(cents));
-}
+export const formatMoney = (cents: Cents, currency: "MXN" = "MXN"): string =>
+  new Intl.NumberFormat("es-MX", { style: "currency", currency }).format(fromCents(cents));

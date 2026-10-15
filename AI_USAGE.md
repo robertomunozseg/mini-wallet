@@ -23,6 +23,7 @@ Trabajé por fases. En cada una le pedí a Claude un plan, lo revisé y lo aprob
 | 8     | Pruebas de extremo a extremo de los flujos principales.                                                                                |
 | 9     | Revisión del código, pruebas de accesibilidad y documentación (README y DECISIONS).                                                    |
 | 10    | Revisión final contra el enunciado del challenge.                                                                                      |
+| 11    | Código más legible: mi estilo, menos archivos y una paginación más simple.                                                             |
 
 ## 2. Qué acepté directamente y qué corregí o rechacé
 
@@ -47,6 +48,7 @@ Trabajé por fases. En cada una le pedí a Claude un plan, lo revisé y lo aprob
 - **Las fases**, su orden y el alcance de cada una, y aprobar cada plan antes de que se escribiera código.
 - **Preparar la app para millones de usuarios**, y autorizar dependencias adicionales como `@tanstack/react-virtual` y `@axe-core/playwright`.
 - **Idioma:** interfaz y README en inglés; DECISIONS y AI_USAGE en español.
+- **Revisar el código para que comunique**: lo escribí a mi estilo (`const` con flecha, comentarios cortos), pedí quitar archivos que sobraban y aprobé simplificar la paginación.
 - **Qué dejar para el final** (los ajustes de documentación) y **no desplegar la app en Vercel** por ahora, para no depender de una versión demo ni de una base de datos.
 
 ## Reflexiones

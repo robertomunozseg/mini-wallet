@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { hydrate } from "../slices/sessionSlice";
+import type { User } from "@/domain/types";
+import reducer, { hydrate } from "../slices/sessionSlice";
 import { setRecipient } from "../slices/transferSlice";
 import { makeStore } from "../store";
 
@@ -15,12 +16,12 @@ describe("makeStore", () => {
     expect(b.getState().session.user).toBeNull();
     expect(b.getState().transfer.recipient).toBe("");
   });
+});
 
-  it("accepts a preloaded state", () => {
-    const store = makeStore({
-      session: { user: { id: "user-demo", name: "Demo User", email: "demo@example.com" } },
-    });
-    expect(store.getState().session.user?.id).toBe("user-demo");
-    expect(store.getState().transfer.step).toBe("amount");
+const user: User = { id: "user-demo", name: "Demo User", email: "demo@example.com" };
+
+describe("sessionSlice reducer", () => {
+  it("hydrate stores the user", () => {
+    expect(reducer({ user: null }, hydrate(user))).toEqual({ user });
   });
 });

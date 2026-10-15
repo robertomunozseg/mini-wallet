@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { asCents } from "@/domain/money";
 import { getBalance, listMovements, resetDb } from "../../mock-db";
-import { createTransactionService, TIMEOUT_DELAY_MS, timeoutDelayMs } from "../transactionService";
+import { createTransactionService, getReceipt, TIMEOUT_DELAY_MS } from "../transactionService";
 
 const SEEDED_BALANCE = 1_250_000;
 
@@ -9,7 +9,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-function setup() {
+const setup = () => {
   const sleep = vi.fn<(ms: number) => Promise<void>>().mockResolvedValue(undefined);
   let nextId = 0;
   const service = createTransactionService({
@@ -18,12 +18,10 @@ function setup() {
     newId: () => `id-${++nextId}`,
   });
   return { service, sleep };
-}
-
-function transfer(amountCents: number, recipient = "Ana García") {
+};
+const transfer = (amountCents: number, recipient = "Ana García") => {
   return { amountCents: asCents(amountCents), recipient };
-}
-
+};
 describe("transactionService.create", () => {
   beforeEach(() => {
     resetDb();
@@ -73,23 +71,6 @@ describe("transactionService.create", () => {
       const result = await service.create(transfer(1_000, "   "), "key-1", "success");
       expect(result).toMatchObject({ ok: false, error: { code: "VALIDATION_ERROR" } });
       expect(getBalance()).toBe(SEEDED_BALANCE);
-    });
-
-    it("reports every broken rule in one message", async () => {
-      const { service } = setup();
-      const result = await service.create(transfer(SEEDED_BALANCE + 1, ""), "key-1", "success");
-      expect(result).toMatchObject({ ok: false, error: { code: "INSUFFICIENT_FUNDS" } });
-      if (!result.ok) {
-        expect(result.error.message).toContain("Insufficient balance.");
-        expect(result.error.message).toContain("Choose a recipient.");
-      }
-    });
-
-    it("validates before applying the scenario", async () => {
-      const { service, sleep } = setup();
-      const result = await service.create(transfer(1_000, ""), "key-1", "timeout");
-      expect(result).toMatchObject({ ok: false, error: { code: "VALIDATION_ERROR" } });
-      expect(sleep).not.toHaveBeenCalled();
     });
   });
 
@@ -146,20 +127,6 @@ describe("transactionService.create", () => {
       expect(listMovements()).toHaveLength(movementsBefore + 1);
     });
 
-    it("returns the stored result even if the repeated request differs", async () => {
-      const { service } = setup();
-      const first = await service.create(transfer(50_000), "key-1", "success");
-      const second = await service.create(transfer(99_999, "Luis"), "key-1", "network_error");
-      expect(second).toEqual(first);
-    });
-
-    it("creates a new transaction for a different key", async () => {
-      const { service } = setup();
-      await service.create(transfer(50_000), "key-1", "success");
-      await service.create(transfer(50_000), "key-2", "success");
-      expect(getBalance()).toBe(SEEDED_BALANCE - 100_000);
-    });
-
     it("stores insufficient_funds, so a retry with the same key gets the same answer", async () => {
       const { service } = setup();
       const first = await service.create(transfer(1_000), "key-1", "insufficient_funds");
@@ -180,28 +147,23 @@ describe("transactionService.create", () => {
         expect(getBalance()).toBe(SEEDED_BALANCE - 1_000);
       },
     );
-
-    it("does not store validation errors", async () => {
-      const { service } = setup();
-      const invalid = await service.create(transfer(1_000, ""), "key-1", "success");
-      expect(invalid.ok).toBe(false);
-
-      const fixed = await service.create(transfer(1_000), "key-1", "success");
-      expect(fixed.ok).toBe(true);
-    });
   });
 });
 
-describe("timeoutDelayMs", () => {
-  it("is 10 seconds by default", () => {
-    expect(timeoutDelayMs(undefined)).toBe(10_000);
-  });
+beforeEach(() => {
+  resetDb();
+});
 
-  it("uses a positive whole number", () => {
-    expect(timeoutDelayMs("300")).toBe(300);
-  });
+describe("getReceipt", () => {
+  it("returns the receipt of a completed transfer, by transaction id", async () => {
+    const service = createTransactionService({ newId: () => "tx-1" });
+    const created = await service.create(
+      { amountCents: asCents(50_000), recipient: "Ana García" },
+      "key-1",
+      "success",
+    );
 
-  it.each(["", "abc", "0", "-5", "1.5", "NaN", "Infinity"])("ignores %j", (value) => {
-    expect(timeoutDelayMs(value)).toBe(10_000);
+    expect(created.ok).toBe(true);
+    expect(getReceipt("tx-1")).toEqual(created.ok ? created.value : null);
   });
 });

@@ -3,7 +3,7 @@ import { classNames } from "@/lib/class-names";
 
 type CardProps = HTMLAttributes<HTMLDivElement>;
 
-export function Card({ className, ...rest }: CardProps) {
+export const Card = ({ className, ...rest }: CardProps) => {
   return (
     <div
       {...rest}
@@ -13,4 +13,4 @@ export function Card({ className, ...rest }: CardProps) {
       )}
     />
   );
-}
+};

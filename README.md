@@ -154,17 +154,17 @@ All responses use the same error contract: `{ "error": { "code": "...", "message
 
 ## Libraries and why
 
-| Library                                         | Why                                                                                                                                                                                                                                                  |
-| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Next.js 16 (App Router)                         | Server Components for the first render of each page, route handlers for the mock API, `proxy.ts` for route protection                                                                                                                                |
-| TypeScript (strict, `noUncheckedIndexedAccess`) | Types are the first line of defense; money has its own branded type                                                                                                                                                                                  |
-| Redux Toolkit                                   | Small app state that crosses screens: the signed-in user and the transfer draft (step, amount, recipient, idempotency key)                                                                                                                           |
-| axios + axios-hooks                             | One configured HTTP client and a hook per request with loading and error state; mutations are manual                                                                                                                                                 |
-| Zod                                             | Validates request bodies and query strings, and the login and contact forms, with one schema on both sides                                                                                                                                           |
-| Tailwind CSS                                    | Fast, consistent, responsive styling without custom CSS files                                                                                                                                                                                        |
-| @tanstack/react-virtual                         | Renders only the visible rows of the movements list, so 10,000 movements stay fast                                                                                                                                                                   |
-| Vitest + Testing Library                        | Unit and component tests                                                                                                                                                                                                                             |
-| Playwright + axe-core                           | End-to-end tests of the real flows and automatic WCAG 2.1 A/AA checks of every screen. Chosen for its automatic waiting, its built-in web server, `page.route` to force failure scenarios and role-based locators (see [DECISIONS.md](DECISIONS.md)) |
+| Library                                         | Why                                                                                                                                                                                                                                                      |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Next.js 16 (App Router)                         | Server Components for the first render of each page, route handlers for the mock API, `proxy.ts` for route protection                                                                                                                                    |
+| TypeScript (strict, `noUncheckedIndexedAccess`) | Types are the first line of defense; money has its own branded type                                                                                                                                                                                      |
+| Redux Toolkit                                   | Small app state that crosses screens: the signed-in user and the transfer draft (step, amount, recipient, idempotency key)                                                                                                                               |
+| axios + axios-hooks                             | One configured HTTP client and a hook per request with loading and error state; mutations are manual                                                                                                                                                     |
+| Zod                                             | Validates request bodies and query strings, and the login and contact forms, with one schema on both sides                                                                                                                                               |
+| Tailwind CSS                                    | Fast, consistent, responsive styling without custom CSS files                                                                                                                                                                                            |
+| @tanstack/react-virtual                         | Renders only the visible rows of the movements list, so 10,000 movements stay fast                                                                                                                                                                       |
+| Vitest + Testing Library                        | Unit and component tests                                                                                                                                                                                                                                 |
+| Playwright + axe-core                           | End-to-end tests of the real flows and automatic WCAG 2.1 A/AA checks of the main screens. Chosen for its automatic waiting, its built-in web server, `page.route` to force failure scenarios and role-based locators (see [DECISIONS.md](DECISIONS.md)) |
 
 ## Project structure
 
@@ -190,7 +190,7 @@ Data flows in one direction: `domain` → `server/services` → `app/api` → ho
 ## Tests
 
 - **Unit and component tests** sit next to the code in `__tests__` folders (`npm test`).
-- **End-to-end tests** are in `tests/e2e` (`npm run test:e2e`): login, home, the whole transfer flow up to the receipt, one test per failure scenario, and an accessibility check (axe) of every screen.
+- **End-to-end tests** are in `tests/e2e` (`npm run test:e2e`): login, home, the whole transfer flow up to the receipt, one test per failure scenario, and an accessibility check (axe) of the login, the Home and the transfer summary.
 
 ## Known limitations
 

@@ -7,9 +7,8 @@ type ContactOptionProps = {
   onSelect: (contact: Contact) => void;
 };
 
-// memo: choosing a contact, typing in the search box or loading another page re-renders the
-// parent, but an option only re-renders when its own contact or checked state changes. That needs
-// `onSelect` to keep the same identity between renders (the parent wraps it in useCallback).
+// memo: an option only re-renders when its own contact or checked state changes, as long as
+// `onSelect` keeps the same identity (the parent wraps it in useCallback).
 export const ContactOption = memo(function ContactOption({
   contact,
   checked,

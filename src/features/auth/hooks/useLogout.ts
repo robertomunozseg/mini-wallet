@@ -15,7 +15,7 @@ type UseLogoutResult = {
   error: ApiError | null;
 };
 
-export function useLogout(): UseLogoutResult {
+export const useLogout = (): UseLogoutResult => {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [{ loading, error }, execute] = useAxios<LogoutResponse, undefined, ApiErrorBody>(
@@ -38,4 +38,4 @@ export function useLogout(): UseLogoutResult {
   const apiError = useMemo(() => (error ? mapApiError(error) : null), [error]);
 
   return { logout, isLoading: loading, error: apiError };
-}
+};

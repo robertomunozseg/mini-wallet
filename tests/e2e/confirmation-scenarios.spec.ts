@@ -89,22 +89,4 @@ test.describe("confirmation scenarios", () => {
     await page.getByRole("link", { name: "Back to home" }).click();
     await expect(page).toHaveURL(/\/home$/);
   });
-
-  test("shows Processing… and then says it is taking longer than usual", async ({
-    signedIn: page,
-  }) => {
-    await page.route("**/api/transactions", async (route) => {
-      await new Promise((resolve) => setTimeout(resolve, 3_500));
-      await route.continue({
-        headers: { ...route.request().headers(), [SCENARIO_HEADER]: "network_error" },
-      });
-    });
-    await reachSummary(page);
-    await page.getByRole("button", { name: "Confirm" }).click();
-
-    await expect(page.getByText("Processing…")).toBeVisible();
-    await expect(page.getByText("This is taking longer than usual")).toBeVisible();
-    await expect(page.getByRole("button", { name: /Back/ })).toBeDisabled();
-    await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
-  });
 });

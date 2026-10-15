@@ -19,7 +19,7 @@ export const SEARCH_DEBOUNCE_MS = 300;
 
 // State and actions of the recipient step: search, contact selection, the "new contact" form and
 // Continue. RecipientStep only renders what this hook returns.
-export function useRecipientStep(balanceCents: Cents, scenario?: ListScenario) {
+export const useRecipientStep = (balanceCents: Cents, scenario?: ListScenario) => {
   const dispatch = useAppDispatch();
   const recipient = useAppSelector(selectRecipient);
   const validation = useAppSelector((state) => selectTransferValidation(state, balanceCents));
@@ -32,13 +32,12 @@ export function useRecipientStep(balanceCents: Cents, scenario?: ListScenario) {
 
   const [showForm, setShowForm] = useState(false);
   const [attempted, setAttempted] = useState(false);
-  // The store only keeps the recipient name (what the API receives), and two contacts can share a
-  // name, so the chosen contact is tracked by id here. Coming back to this step, the first
-  // contact with the stored name is shown as selected.
+  // The store only keeps the name (that is what the API gets) and two contacts can share it, so
+  // the chosen one is tracked by id here.
   const [chosenId, setChosenId] = useState<string | null>(null);
 
-  // The server already sorted favorites first; this only splits the list in two groups. useMemo
-  // keeps the same arrays between renders, which lets the memoized groups skip re-rendering.
+  // The server already sorted favorites first; this only splits them. useMemo keeps the same
+  // arrays so the memoized groups can skip re-rendering.
   const groups = useMemo(() => groupContacts(items), [items]);
 
   const isSearching = query.trim() !== debouncedQuery.trim() || isLoading;
@@ -46,9 +45,9 @@ export function useRecipientStep(balanceCents: Cents, scenario?: ListScenario) {
   const selectedId =
     chosenId ?? (recipient === "" ? null : (items.find((c) => c.name === recipient)?.id ?? null));
 
-  // useCallback: ContactOption is memoized and receives this function; a new one on every render
-  // would make every option re-render each time.
-  const handleSelect = useCallback(
+  // useCallback: ContactOption is memoized, and a new function on every render would make every
+  // option re-render.
+  const onSelect = useCallback(
     (contact: Contact) => {
       setChosenId(contact.id);
       dispatch(setRecipient(contact.name));
@@ -56,7 +55,7 @@ export function useRecipientStep(balanceCents: Cents, scenario?: ListScenario) {
     [dispatch],
   );
 
-  const handleCreated = useCallback(
+  const onCreated = useCallback(
     (contact: Contact) => {
       setChosenId(contact.id);
       dispatch(setRecipient(contact.name));
@@ -69,11 +68,11 @@ export function useRecipientStep(balanceCents: Cents, scenario?: ListScenario) {
   const toggleForm = useCallback(() => setShowForm((open) => !open), []);
   const closeForm = useCallback(() => setShowForm(false), []);
 
-  function handleContinue() {
+  const onContinue = () => {
     setAttempted(true);
     if (recipientMissing) return;
     dispatch(goToStep("summary"));
-  }
+  };
 
   return {
     query,
@@ -89,8 +88,8 @@ export function useRecipientStep(balanceCents: Cents, scenario?: ListScenario) {
     showForm,
     toggleForm,
     closeForm,
-    handleSelect,
-    handleCreated,
-    handleContinue,
+    onSelect,
+    onCreated,
+    onContinue,
   };
-}
+};
