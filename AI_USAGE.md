@@ -47,6 +47,6 @@ Trabajé por fases. En cada una le pedí a Claude un plan, lo revisé y lo aprob
 - **Las fases**, su orden y el alcance de cada una, y aprobar cada plan antes de que se escribiera código.
 - **Preparar la app para millones de usuarios**, y autorizar dependencias adicionales como `@tanstack/react-virtual` y `@axe-core/playwright`.
 - **Idioma:** interfaz y documentos en inglés, y AI_USAGE en español.
-- **Qué dejar para el final:** los ajustes de documentación y de despliegue.
+- **Qué dejar para el final** (los ajustes de documentación) y **no desplegar la app en Vercel** por ahora, para no depender de una versión demo ni de una base de datos.
 
 ## Reflexiones

@@ -1,6 +1,6 @@
 # Mini Wallet
 
-A small wallet web app: sign in, see your balance and movements, send money to a contact and get a receipt. Built with **Next.js (App Router) + TypeScript** for the Spin Web Challenge. There is no real backend: the API is a set of Next.js route handlers backed by an in-memory mock database.
+A small wallet web app: sign in, see your balance and movements, send money to a contact and get a receipt. Built with **Next.js (App Router) + TypeScript**. There is no real backend: the API is a set of Next.js route handlers backed by an in-memory mock database.
 
 ## What you can do
 
@@ -8,6 +8,8 @@ A small wallet web app: sign in, see your balance and movements, send money to a
 2. **Home**: see your balance and a paginated, virtualized list of movements.
 3. **New transfer**: enter an amount, choose (or create) a recipient, review and confirm.
 4. **Receipt**: reference, date, amount, recipient and new balance. Every failure scenario of a transfer (network error, insufficient funds, timeout, unknown error) has its own screen.
+
+> **Note:** about 4 in 10 transfer confirmations fail on purpose, as the brief asks. See [Forcing scenarios](#forcing-scenarios) to choose the result.
 
 ## Requirements
 
@@ -43,7 +45,7 @@ There are no real accounts. The login accepts:
 
 `POST /api/transactions` picks a scenario at random (success 60 %, every other scenario 10 %), so a transfer can fail on purpose. To see a specific case:
 
-- **Demo selector (easiest).** Create a file named `.env.local` with `NEXT_PUBLIC_DEMO_MODE=true` and restart `npm run dev`. The transfer summary then shows a **Simulated scenario** selector: random (default), `success`, `network_error`, `insufficient_funds`, `timeout` or `unknown_error`. The variable is read at build time, so on a deployment set it before building.
+- **Demo selector (easiest).** Create a file named `.env.local` with `NEXT_PUBLIC_DEMO_MODE=true` and restart `npm run dev`. The transfer summary then shows a **Simulated scenario** selector: random (default), `success`, `network_error`, `insufficient_funds`, `timeout` or `unknown_error`.
 - **Header.** Send `x-mock-scenario: <scenario>` with the request (this is what the end-to-end tests do).
 - **Lists.** Add a query parameter to the page URL:
   - `/home?scenario=empty` shows the empty state, `/home?scenario=error` the error state with a retry button.
@@ -119,7 +121,7 @@ Data flows in one direction: `domain` → `server/services` → `app/api` → ho
 
 ## Known limitations
 
-- **State lives in memory.** Balance, movements, contacts and receipts are kept in the server process. Restarting the server resets them, and on a serverless platform each instance has its own copy, so a freshly created receipt may not be found by another instance.
+- **State lives in memory.** Balance, movements, contacts and receipts are kept in the server process. Restarting the server resets them. The app is meant to run as one local process (`npm run dev` or `npm start`); on a serverless platform each instance would have its own copy, so it would need a database first.
 - **The session is a mock.** The cookie holds a fixed token; there are no real users, passwords or per-user data.
 - **One user.** Every receipt belongs to the demo user.
 - **Contacts are not virtualized.** They are paginated with a "Load more" button and narrowed down by the server-side search.
@@ -129,4 +131,20 @@ Data flows in one direction: `domain` → `server/services` → `app/api` → ho
 
 ## Time spent
 
-[TO BE FILLED IN]
+Approximate active time per phase, including my own review of the code, testing in the browser and review of the UI. I worked in short sessions.
+
+| Phase | Work                                                         | Approx. time       |
+| ----- | ------------------------------------------------------------ | ------------------ |
+| 0     | Project setup: strict TypeScript, tests, formatting, folders | 20-30 min          |
+| 1     | Domain: money, transfer rules and schemas                    | 15-20 min          |
+| 2     | Mock server: data, session, scenarios and idempotency        | 15-20 min          |
+| 3     | UI foundations: store, HTTP client and base components       | 15-20 min          |
+| 4     | Login, route protection and logout                           | 15-20 min          |
+| 5     | Home: balance and movements                                  | 15-20 min          |
+| 6     | Transfer flow up to the summary                              | 15-20 min          |
+| Extra | Built for scale: pagination, search and virtualization       | 15-20 min          |
+| 7     | Confirmation, failure scenarios and receipt                  | 15-20 min          |
+| 8     | End-to-end tests                                             | 15-20 min          |
+| 9     | Code review, accessibility and documentation                 | 15-20 min          |
+| 10    | Final review against the brief                               | 15-20 min          |
+| Total |                                                              | about 3 to 4 hours |

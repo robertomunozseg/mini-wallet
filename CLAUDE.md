@@ -19,7 +19,7 @@ El autor será entrevistado sobre este código y modificará partes en vivo: **p
 - Validación: **Zod** + funciones puras de dominio
 - Estilos: Tailwind CSS
 - Tests: Vitest + Testing Library (unit) · Playwright (e2e)
-- Deploy: Vercel
+- Ejecución: local (`npm run dev` / `npm start`); por ahora sin despliegue
 
 ## Arquitectura y reglas de capas
 ```
