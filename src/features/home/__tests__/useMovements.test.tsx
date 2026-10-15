@@ -6,7 +6,7 @@ import type { Movement } from "@/domain/types";
 import { installHttpAdapter, jsonResponse, networkError } from "@/test-utils/http-adapter";
 import { useMovements } from "../hooks/useMovements";
 
-function movement(id: string): Movement {
+const movement = (id: string): Movement => {
   return {
     id,
     type: "incoming",
@@ -15,8 +15,7 @@ function movement(id: string): Movement {
     createdAt: "2026-10-01T09:00:00.000Z",
     status: "completed",
   };
-}
-
+};
 describe("useMovements", () => {
   let restore = () => {};
 

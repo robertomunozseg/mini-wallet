@@ -10,10 +10,9 @@ const contacts: Contact[] = [
   { id: "5", name: "Beto Díaz", phoneOrEmail: "5511112222", isFavorite: false },
 ];
 
-function names(list: readonly Contact[]): string[] {
+const names = (list: readonly Contact[]): string[] => {
   return list.map((contact) => contact.name);
-}
-
+};
 describe("filterContacts", () => {
   it("returns every contact for an empty or blank query", () => {
     expect(filterContacts(contacts, "")).toEqual(contacts);

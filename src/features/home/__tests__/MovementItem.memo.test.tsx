@@ -27,14 +27,13 @@ const movement: Movement = {
   status: "completed",
 };
 
-function row(overrides: Partial<React.ComponentProps<typeof MovementItem>> = {}) {
+const row = (overrides: Partial<React.ComponentProps<typeof MovementItem>> = {}) => {
   return (
     <ul>
       <MovementItem movement={movement} offsetTop={0} index={0} setSize={-1} {...overrides} />
     </ul>
   );
-}
-
+};
 describe("MovementItem memoization", () => {
   beforeEach(() => {
     formatCalls.mockClear();

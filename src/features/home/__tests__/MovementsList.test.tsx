@@ -60,7 +60,7 @@ const movements: Movement[] = [
   },
 ];
 
-function mockHook(state: Partial<PaginatedList<Movement>>) {
+const mockHook = (state: Partial<PaginatedList<Movement>>) => {
   useMovementsMock.mockReturnValue({
     items: [],
     isLoading: false,
@@ -72,8 +72,7 @@ function mockHook(state: Partial<PaginatedList<Movement>>) {
     refetch,
     ...state,
   } satisfies PaginatedList<Movement>);
-}
-
+};
 describe("MovementsList", () => {
   beforeEach(() => {
     refetch.mockReset();

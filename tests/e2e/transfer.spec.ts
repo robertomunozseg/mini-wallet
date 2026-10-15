@@ -12,10 +12,9 @@ import {
 
 // A phone number that is different on every run, because created contacts live in memory
 // until the server restarts and duplicates are rejected.
-function uniquePhone(): string {
+const uniquePhone = (): string => {
   return `55${String(Date.now()).slice(-8)}`;
-}
-
+};
 test.describe("transfer flow", () => {
   test("an anonymous user is sent to /login", async ({ page }) => {
     await page.goto("/transfer");

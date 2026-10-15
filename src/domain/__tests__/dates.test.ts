@@ -3,10 +3,9 @@ import { formatDateTime, formatRelativeTime } from "../dates";
 
 const now = new Date("2026-10-14T12:00:00.000Z");
 
-function ago(ms: number): string {
+const ago = (ms: number): string => {
   return new Date(now.getTime() - ms).toISOString();
-}
-
+};
 const SECOND = 1000;
 const MINUTE = 60 * SECOND;
 const HOUR = 60 * MINUTE;

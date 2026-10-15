@@ -9,20 +9,18 @@ import { SummaryStep } from "../components/SummaryStep";
 
 const balanceCents = asCents(100_000); // $1,000.00
 
-function storeWith(amountCents: number | null, recipient: string) {
+const storeWith = (amountCents: number | null, recipient: string) => {
   const store = makeStore();
   store.dispatch(setAmount(amountCents === null ? null : asCents(amountCents)));
   store.dispatch(setRecipient(recipient));
   store.dispatch(goToStep("summary"));
   return store;
-}
-
+};
 const onConfirm = vi.fn();
 
-function confirmButton() {
+const confirmButton = () => {
   return screen.getByRole("button", { name: "Confirm" });
-}
-
+};
 afterEach(() => {
   onConfirm.mockReset();
   vi.unstubAllEnvs();

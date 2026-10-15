@@ -10,7 +10,7 @@ const contacts = [
 
 type Seen = { q: unknown; limit: unknown; cursor: unknown; scenario: unknown };
 
-function recordingServer(body: unknown = { contacts, nextCursor: null }) {
+const recordingServer = (body: unknown = { contacts, nextCursor: null }) => {
   const requests: Seen[] = [];
   const handler = (config: Parameters<Parameters<typeof installHttpAdapter>[0]>[0]) => {
     const params = (config.params ?? {}) as Record<string, unknown>;
@@ -23,8 +23,7 @@ function recordingServer(body: unknown = { contacts, nextCursor: null }) {
     return jsonResponse(config, 200, body);
   };
   return { requests, handler };
-}
-
+};
 describe("useContacts", () => {
   let restore = () => {};
 

@@ -5,6 +5,7 @@ import type { User } from "@/domain/types";
 import { hydrate } from "@/store/slices/sessionSlice";
 import { makeStore } from "@/store/store";
 import { CurrentUser } from "../components/CurrentUser";
+import { SessionHydrator } from "../components/SessionHydrator";
 
 const user: User = { id: "user-demo", name: "Demo User", email: "demo@example.com" };
 
@@ -28,6 +29,30 @@ describe("CurrentUser", () => {
       </Provider>,
     );
 
+    expect(container).toBeEmptyDOMElement();
+  });
+});
+
+describe("SessionHydrator", () => {
+  it("copies the user into the session store", () => {
+    const store = makeStore();
+    expect(store.getState().session.user).toBeNull();
+
+    render(
+      <Provider store={store}>
+        <SessionHydrator user={user} />
+      </Provider>,
+    );
+
+    expect(store.getState().session.user).toEqual(user);
+  });
+
+  it("renders nothing", () => {
+    const { container } = render(
+      <Provider store={makeStore()}>
+        <SessionHydrator user={user} />
+      </Provider>,
+    );
     expect(container).toBeEmptyDOMElement();
   });
 });

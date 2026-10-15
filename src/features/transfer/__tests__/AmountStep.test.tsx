@@ -9,15 +9,13 @@ import { AmountStep } from "../components/AmountStep";
 
 const balanceCents = asCents(100_000); // $1,000.00
 
-function field() {
+const field = () => {
   return screen.getByLabelText("Amount (MXN)");
-}
-
-async function typeAmount(value: string) {
+};
+const typeAmount = async (value: string) => {
   await userEvent.type(field(), value);
   await userEvent.tab(); // blur
-}
-
+};
 describe("AmountStep", () => {
   it("shows the available balance", () => {
     renderWithStore(<AmountStep balanceCents={balanceCents} />);

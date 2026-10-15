@@ -11,12 +11,11 @@ beforeEach(() => {
 });
 
 // All the contacts, following the cursors, so the tests do not depend on the page size.
-function allContacts(): Contact[] {
+const allContacts = (): Contact[] => {
   const result = listPage({ limit: 50 });
   if (!result.ok) throw new Error("unexpected error");
   return result.value.items;
-}
-
+};
 describe("contactService", () => {
   it("lists the seeded contacts, 3 of them favorites", () => {
     const contacts = allContacts();

@@ -2,7 +2,7 @@ import { AxiosError, AxiosHeaders, type AxiosResponse } from "axios";
 import { describe, expect, it } from "vitest";
 import { mapApiError } from "../map-api-error";
 
-function httpError(status: number, data: unknown): AxiosError {
+const httpError = (status: number, data: unknown): AxiosError => {
   const response: AxiosResponse = {
     data,
     status,
@@ -17,8 +17,7 @@ function httpError(status: number, data: unknown): AxiosError {
     undefined,
     response,
   );
-}
-
+};
 describe("mapApiError", () => {
   it("maps ECONNABORTED to TIMEOUT", () => {
     const error = new AxiosError("timeout of 8000ms exceeded", AxiosError.ECONNABORTED);

@@ -9,10 +9,9 @@ type Item = { id: number };
 type Response = { rows: Item[]; nextCursor: string | null };
 
 // Module level, like in the real hooks: the hook needs a stable `select`.
-function select(response: Response): Page<Item> {
+const select = (response: Response): Page<Item> => {
   return { items: response.rows, nextCursor: response.nextCursor };
-}
-
+};
 type HookProps = {
   params?: Record<string, string | undefined>;
   headers?: Record<string, string>;
@@ -20,21 +19,19 @@ type HookProps = {
   initialPage?: Page<Item>;
 };
 
-function setup(initial: HookProps = {}) {
+const setup = (initial: HookProps = {}) => {
   return renderHook(
     (props: HookProps) => usePaginatedList<Response, Item>({ url: "/items", select, ...props }),
     { initialProps: initial },
   );
-}
-
-function ids(items: Item[]): number[] {
+};
+const ids = (items: Item[]): number[] => {
   return items.map((item) => item.id);
-}
-
+};
 // A fake server with 25 items served in pages by cursor ("c10" means "after item 10").
 type Seen = { params: Record<string, unknown>; headers: unknown };
 
-function pagedServer(total = 25) {
+const pagedServer = (total = 25) => {
   const requests: Seen[] = [];
   const handler = (config: InternalAxiosRequestConfig): Promise<AxiosResponse> => {
     const params = { ...config.params } as Record<string, unknown>;
@@ -49,8 +46,7 @@ function pagedServer(total = 25) {
     return jsonResponse(config, 200, { rows, nextCursor });
   };
   return { requests, handler };
-}
-
+};
 describe("usePaginatedList", () => {
   let restore = () => {};
   afterEach(() => {

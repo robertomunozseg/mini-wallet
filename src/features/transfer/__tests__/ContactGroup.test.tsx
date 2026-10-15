@@ -6,7 +6,7 @@ import { ContactGroup } from "../components/ContactGroup";
 
 // A contact that counts how many times its name is read. A component reads it every time it
 // renders, so the count is the number of renders: a skipped render (memo) reads nothing.
-function trackedContact(id: string): { contact: Contact; reads: () => number } {
+const trackedContact = (id: string): { contact: Contact; reads: () => number } => {
   let reads = 0;
   const contact: Contact = { id, name: "", phoneOrEmail: `55000000${id}`, isFavorite: false };
   Object.defineProperty(contact, "name", {
@@ -17,8 +17,7 @@ function trackedContact(id: string): { contact: Contact; reads: () => number } {
     },
   });
   return { contact, reads: () => reads };
-}
-
+};
 const plain: Contact[] = [
   { id: "1", name: "Ana García", phoneOrEmail: "ana.garcia@example.com", isFavorite: true },
   { id: "2", name: "Luis Hernández", phoneOrEmail: "5512345678", isFavorite: true },

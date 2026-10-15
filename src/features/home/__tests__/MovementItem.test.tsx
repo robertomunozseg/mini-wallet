@@ -4,7 +4,7 @@ import { asCents } from "@/domain/money";
 import type { Movement } from "@/domain/types";
 import { MovementItem } from "../components/MovementItem";
 
-function movement(overrides: Partial<Movement> = {}): Movement {
+const movement = (overrides: Partial<Movement> = {}): Movement => {
   return {
     id: "mov-1",
     type: "incoming",
@@ -14,16 +14,14 @@ function movement(overrides: Partial<Movement> = {}): Movement {
     status: "completed",
     ...overrides,
   };
-}
-
-function renderItem(item: Movement) {
+};
+const renderItem = (item: Movement) => {
   return render(
     <ul>
       <MovementItem movement={item} />
     </ul>,
   );
-}
-
+};
 describe("MovementItem", () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ["Date"] });

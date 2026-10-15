@@ -5,7 +5,7 @@ import { forceScenario, reachRecipientStep, reachSummary, retryUntilHydrated } f
 
 // Checks the page that is on screen against WCAG 2.1 A and AA (contrast, labels, roles, names...).
 // axe ignores the hidden pages Next keeps in the DOM, so only what the user sees is checked.
-async function expectNoViolations(page: Page) {
+const expectNoViolations = async (page: Page) => {
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();
@@ -17,8 +17,7 @@ async function expectNoViolations(page: Page) {
         .join(" | ")}`,
   );
   expect(summary).toEqual([]);
-}
-
+};
 test.describe("accessibility", () => {
   test("login", async ({ page }) => {
     await page.goto("/login");

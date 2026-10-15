@@ -36,7 +36,7 @@ const contacts: Contact[] = [
   },
 ];
 
-function mockContacts(state: Partial<PaginatedList<Contact>>) {
+const mockContacts = (state: Partial<PaginatedList<Contact>>) => {
   useContactsMock.mockReturnValue({
     items: contacts,
     isLoading: false,
@@ -48,30 +48,25 @@ function mockContacts(state: Partial<PaginatedList<Contact>>) {
     refetch,
     ...state,
   } satisfies PaginatedList<Contact>);
-}
-
+};
 // A store that already completed the amount step, like a real user reaching this step.
-function storeAtRecipientStep() {
+const storeAtRecipientStep = () => {
   const store = makeStore();
   store.dispatch(setAmount(asCents(5_000)));
   store.dispatch(goToStep("recipient"));
   return store;
-}
-
-function renderStep(store = storeAtRecipientStep(), scenario?: "large") {
+};
+const renderStep = (store = storeAtRecipientStep(), scenario?: "large") => {
   return renderWithStore(<RecipientStep balanceCents={balanceCents} scenario={scenario} />, store);
-}
-
-function radioNames(): string[] {
+};
+const radioNames = (): string[] => {
   return screen.getAllByRole("radio").map((radio) => radio.closest("label")?.textContent ?? "");
-}
-
+};
 // Every query the component asked useContacts for, in order and without repeats.
-function searchedQueries(): string[] {
+const searchedQueries = (): string[] => {
   const queries = useContactsMock.mock.calls.map((call) => String(call[0]));
   return queries.filter((query, index) => index === 0 || query !== queries[index - 1]);
-}
-
+};
 describe("RecipientStep", () => {
   let restoreAdapter = () => {};
 

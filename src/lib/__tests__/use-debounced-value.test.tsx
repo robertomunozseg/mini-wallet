@@ -10,12 +10,11 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-function setup(initial: string, delayMs = 300) {
+const setup = (initial: string, delayMs = 300) => {
   return renderHook(({ value, delay }) => useDebouncedValue(value, delay), {
     initialProps: { value: initial, delay: delayMs },
   });
-}
-
+};
 describe("useDebouncedValue", () => {
   it("returns the initial value right away", () => {
     const { result } = setup("ana");

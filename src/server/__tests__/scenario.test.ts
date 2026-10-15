@@ -1,12 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { resolveListScenario, resolveScenario, SCENARIOS } from "../scenario";
 
-function requestWith(header?: string): Pick<Request, "headers"> {
+const requestWith = (header?: string): Pick<Request, "headers"> => {
   const headers = new Headers();
   if (header !== undefined) headers.set("x-mock-scenario", header);
   return { headers };
-}
-
+};
 describe("resolveScenario", () => {
   it.each(SCENARIOS)("uses the forced scenario %s from the header", (scenario) => {
     // random would give "success"; the header must win.

@@ -7,7 +7,7 @@ beforeEach(() => {
   resetDb();
 });
 
-function walk(limit: number, scenario?: "large"): Movement[] {
+const walk = (limit: number, scenario?: "large"): Movement[] => {
   const seen: Movement[] = [];
   let cursor: string | undefined;
   do {
@@ -17,8 +17,7 @@ function walk(limit: number, scenario?: "large"): Movement[] {
     cursor = result.value.nextCursor ?? undefined;
   } while (cursor !== undefined);
   return seen;
-}
-
+};
 describe("movementService.list", () => {
   it("returns the seeded movements, newest first", () => {
     const result = list({ limit: 20 });

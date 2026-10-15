@@ -18,15 +18,14 @@ vi.mock("next/navigation", () => ({ useRouter: () => router }));
 
 const user = { id: "user-demo", name: "Demo User", email: "demo@example.com" };
 
-function setup() {
+const setup = () => {
   const store = makeStore();
   const wrapper = ({ children }: { children: ReactNode }) => (
     <Provider store={store}>{children}</Provider>
   );
   const hook = renderHook(() => useLogin(), { wrapper });
   return { store, ...hook };
-}
-
+};
 describe("useLogin", () => {
   let restoreAdapter = () => {};
 

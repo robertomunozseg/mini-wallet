@@ -14,7 +14,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-function setup() {
+const setup = () => {
   const sleep = vi.fn<(ms: number) => Promise<void>>().mockResolvedValue(undefined);
   let nextId = 0;
   const service = createTransactionService({
@@ -23,12 +23,10 @@ function setup() {
     newId: () => `id-${++nextId}`,
   });
   return { service, sleep };
-}
-
-function transfer(amountCents: number, recipient = "Ana García") {
+};
+const transfer = (amountCents: number, recipient = "Ana García") => {
   return { amountCents: asCents(amountCents), recipient };
-}
-
+};
 describe("transactionService.create", () => {
   beforeEach(() => {
     resetDb();

@@ -16,11 +16,10 @@ vi.mock("../hooks/useContacts", () => ({ useContacts: useContactsMock }));
 
 const balanceCents = asCents(100_000);
 
-function currentStep(): string {
+const currentStep = (): string => {
   const current = screen.getByRole("listitem", { current: "step" });
   return current.textContent ?? "";
-}
-
+};
 describe("TransferFlow", () => {
   beforeEach(() => {
     router.push.mockReset();

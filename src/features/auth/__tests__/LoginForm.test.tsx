@@ -8,17 +8,15 @@ vi.mock("../hooks/useLogin", () => ({ useLogin: useLoginMock }));
 
 const login = vi.fn();
 
-function mockLogin(state: {
+const mockLogin = (state: {
   isLoading?: boolean;
   error?: { code: string; message: string } | null;
-}) {
+}) => {
   useLoginMock.mockReturnValue({ login, isLoading: false, error: null, ...state });
-}
-
-function field() {
+};
+const field = () => {
   return screen.getByLabelText("Email or phone");
-}
-
+};
 describe("LoginForm", () => {
   beforeEach(() => {
     login.mockReset();

@@ -38,7 +38,7 @@ afterAll(() => {
   vi.restoreAllMocks();
 });
 
-function makeMovements(count: number): Movement[] {
+const makeMovements = (count: number): Movement[] => {
   return Array.from({ length: count }, (_, index) => ({
     id: `m-${index}`,
     type: index % 2 === 0 ? "incoming" : "outgoing",
@@ -47,13 +47,12 @@ function makeMovements(count: number): Movement[] {
     createdAt: new Date(Date.UTC(2026, 9, 13) - index * 60_000).toISOString(),
     status: "completed",
   }));
-}
-
+};
 const loadMore = vi.fn();
 
 type Overrides = Partial<React.ComponentProps<typeof VirtualMovementList>>;
 
-function renderList(count: number, overrides: Overrides = {}) {
+const renderList = (count: number, overrides: Overrides = {}) => {
   return render(
     <VirtualMovementList
       movements={makeMovements(count)}
@@ -64,12 +63,10 @@ function renderList(count: number, overrides: Overrides = {}) {
       {...overrides}
     />,
   );
-}
-
-function names(): string[] {
+};
+const names = (): string[] => {
   return screen.queryAllByRole("listitem").map((item) => item.textContent ?? "");
-}
-
+};
 beforeEach(() => {
   loadMore.mockReset();
 });

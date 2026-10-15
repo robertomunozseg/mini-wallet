@@ -3,7 +3,7 @@ import { asCents } from "../money";
 import { sortMovements } from "../movements";
 import type { Movement } from "../types";
 
-function movement(id: string, createdAt: string): Movement {
+const movement = (id: string, createdAt: string): Movement => {
   return {
     id,
     type: "outgoing",
@@ -12,8 +12,7 @@ function movement(id: string, createdAt: string): Movement {
     createdAt,
     status: "completed",
   };
-}
-
+};
 describe("sortMovements", () => {
   it("sorts newest first", () => {
     const sorted = sortMovements([

@@ -18,10 +18,9 @@ import { makeStore } from "../store";
 
 const initial = reducer(undefined, { type: "@@init" });
 
-function withState(overrides: Partial<TransferState>): TransferState {
+const withState = (overrides: Partial<TransferState>): TransferState => {
   return { ...initial, ...overrides };
-}
-
+};
 afterEach(() => {
   vi.restoreAllMocks();
 });

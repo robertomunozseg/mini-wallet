@@ -30,11 +30,10 @@ const receipt = {
   newBalanceCents: 95_000,
 };
 
-function failure(code: string) {
+const failure = (code: string) => {
   return { error: { code, message: "server message" } };
-}
-
-function setup() {
+};
+const setup = () => {
   const store = makeStore();
   store.dispatch(setAmount(asCents(5_000)));
   store.dispatch(setRecipient("Ana García"));
@@ -42,8 +41,7 @@ function setup() {
     <Provider store={store}>{children}</Provider>
   );
   return { store, ...renderHook(() => useConfirmTransfer(), { wrapper }) };
-}
-
+};
 describe("useConfirmTransfer", () => {
   let restore = () => {};
 
