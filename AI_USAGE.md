@@ -38,7 +38,7 @@ Trabajé por fases. En cada una le pedí a Claude un plan, lo revisé y lo aprob
 - Rechacé la opción de **avanzar sola al elegir un contacto**, que Claude descartó por el riesgo de pulsaciones accidentales.
 - Decidí **no cambiar el servidor de las pruebas e2e**, aunque Claude recomendaba uno propio, hasta hacer más comprobaciones.
 - Pedí **quitar el scroll de toda la página** y un **color más visible al pasar el cursor** por el botón "+".
-- Pedí que los **botones bloqueados por las validaciones se vieran en gris**, porque conservaban su color y podían confundir al usuario.
+- Pedí que los **botones bloqueados por las validaciones se vieran en gris**, porque conservaban su color y podían confundir al usuario. Pedí lo mismo para "Sign in", "Continue" y "Save contact" mientras el formulario no es válido, pero que **sigan mostrando los mensajes de error** al pulsarlos.
 - Reporté fallos que Claude corrigió: un **error de hidratación** y el **Home que se recargaba sin parar**.
 - Detecté movimientos repetidos de "Ana García" y pedí revisarlos: eran de las pruebas automáticas, no un error de la app.
 - Probando el diseño responsivo en las herramientas del navegador vi que en celular el scroll era de toda la página y no de la lista de movimientos; pedí revisarlo antes de cambiar nada y aprobé el ajuste.
