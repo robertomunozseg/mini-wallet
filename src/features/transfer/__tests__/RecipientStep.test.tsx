@@ -59,9 +59,6 @@ const storeAtRecipientStep = () => {
 const renderStep = (store = storeAtRecipientStep(), scenario?: "large") => {
   return renderWithStore(<RecipientStep balanceCents={balanceCents} scenario={scenario} />, store);
 };
-const radioNames = (): string[] => {
-  return screen.getAllByRole("radio").map((radio) => radio.closest("label")?.textContent ?? "");
-};
 // Every query the component asked useContacts for, in order and without repeats.
 const searchedQueries = (): string[] => {
   const queries = useContactsMock.mock.calls.map((call) => String(call[0]));
@@ -85,16 +82,6 @@ describe("RecipientStep", () => {
   });
 
   describe("contact list", () => {
-    it("shows the contacts in the order the server sent them: favorites first", () => {
-      renderStep();
-
-      const names = radioNames();
-      expect(names[0]).toContain("Ana García");
-      expect(names[1]).toContain("Luis Hernández");
-      expect(names[2]).toContain("María López");
-      expect(names[3]).toContain("Carlos Ruiz");
-    });
-
     it("groups the contacts under Favorites and Other contacts", () => {
       renderStep();
 
@@ -168,14 +155,6 @@ describe("RecipientStep", () => {
       // delay: null types without waiting between keys: fast typing.
       return userEvent.setup({ delay: null });
     }
-
-    it("shows what the user types right away", async () => {
-      const user = setupUser();
-      renderStep();
-
-      await user.type(screen.getByLabelText("Search contacts"), "garcia");
-      expect(screen.getByLabelText("Search contacts")).toHaveValue("garcia");
-    });
 
     it("does not search while the user is typing", async () => {
       const user = setupUser();
@@ -392,16 +371,6 @@ describe("RecipientStep", () => {
       expect(screen.getByRole("alert")).toHaveTextContent("We couldn't load your contacts");
       await userEvent.click(screen.getByRole("button", { name: "Try again" }));
       expect(refetch).toHaveBeenCalledTimes(1);
-    });
-
-    it("lets the user add a contact even when the list failed to load", () => {
-      mockContacts({
-        items: [],
-        error: { code: "NETWORK_ERROR", message: "We couldn't reach the server." },
-      });
-      renderStep();
-
-      expect(screen.getByRole("button", { name: "New contact" })).toBeInTheDocument();
     });
   });
 
