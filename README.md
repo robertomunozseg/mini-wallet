@@ -204,20 +204,10 @@ Data flows in one direction: `domain` → `server/services` → `app/api` → ho
 
 ## Time spent
 
-Approximate active time per phase, including my own review of the code, testing in the browser and review of the UI. I worked in short sessions.
+Approximate active time, including my own review of the code, testing in the browser and review of the UI. I worked in short sessions.
 
-| Phase | Work                                                         | Approx. time       |
-| ----- | ------------------------------------------------------------ | ------------------ |
-| 0     | Project setup: strict TypeScript, tests, formatting, folders | 20-30 min          |
-| 1     | Domain: money, transfer rules and schemas                    | 15-20 min          |
-| 2     | Mock server: data, session, scenarios and idempotency        | 15-20 min          |
-| 3     | UI foundations: store, HTTP client and base components       | 15-20 min          |
-| 4     | Login, route protection and logout                           | 15-20 min          |
-| 5     | Home: balance and movements                                  | 15-20 min          |
-| 6     | Transfer flow up to the summary                              | 15-20 min          |
-| Extra | Built for scale: pagination, search and virtualization       | 15-20 min          |
-| 7     | Confirmation, failure scenarios and receipt                  | 15-20 min          |
-| 8     | End-to-end tests                                             | 15-20 min          |
-| 9     | Code review, accessibility and documentation                 | 15-20 min          |
-| 10    | Final review against the brief                               | 15-20 min          |
-| Total |                                                              | about 3 to 4 hours |
+- Each phase: around 15-20 min.
+- Code review: around 40 min.
+- UI review: around 30 min.
+- Final review: around 50 min.
+- **Total: about 5-6 hours.**
