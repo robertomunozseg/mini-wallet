@@ -16,7 +16,7 @@ type ConfirmationResultProps = {
 const TIMEOUT_MESSAGE =
   "The operation took too long. It may have been processed: try again and you will not be charged twice.";
 
-export function ConfirmationResult({ state, onRetry }: ConfirmationResultProps) {
+export const ConfirmationResult = ({ state, onRetry }: ConfirmationResultProps) => {
   const dispatch = useAppDispatch();
 
   if (state.status === "idle") return null;
@@ -69,4 +69,4 @@ export function ConfirmationResult({ state, onRetry }: ConfirmationResultProps) 
       </div>
     </Card>
   );
-}
+};

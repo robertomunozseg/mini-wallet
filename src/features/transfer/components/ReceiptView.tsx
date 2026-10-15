@@ -6,7 +6,7 @@ import type { Receipt } from "@/domain/types";
 
 type ReceiptViewProps = { receipt: Receipt };
 
-export function ReceiptView({ receipt }: ReceiptViewProps) {
+export const ReceiptView = ({ receipt }: ReceiptViewProps) => {
   const { transaction, newBalanceCents } = receipt;
 
   return (
@@ -49,4 +49,4 @@ export function ReceiptView({ receipt }: ReceiptViewProps) {
       </div>
     </div>
   );
-}
+};

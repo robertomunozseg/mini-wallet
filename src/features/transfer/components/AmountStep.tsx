@@ -8,7 +8,7 @@ import { useAmountStep } from "../hooks/useAmountStep";
 
 type AmountStepProps = { balanceCents: Cents };
 
-export function AmountStep({ balanceCents }: AmountStepProps) {
+export const AmountStep = ({ balanceCents }: AmountStepProps) => {
   const step = useAmountStep(balanceCents);
 
   return (
@@ -34,4 +34,4 @@ export function AmountStep({ balanceCents }: AmountStepProps) {
       </Button>
     </form>
   );
-}
+};

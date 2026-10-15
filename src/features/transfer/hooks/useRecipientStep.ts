@@ -19,7 +19,7 @@ export const SEARCH_DEBOUNCE_MS = 300;
 
 // State and actions of the recipient step: search, contact selection, the "new contact" form and
 // Continue. RecipientStep only renders what this hook returns.
-export function useRecipientStep(balanceCents: Cents, scenario?: ListScenario) {
+export const useRecipientStep = (balanceCents: Cents, scenario?: ListScenario) => {
   const dispatch = useAppDispatch();
   const recipient = useAppSelector(selectRecipient);
   const validation = useAppSelector((state) => selectTransferValidation(state, balanceCents));
@@ -93,4 +93,4 @@ export function useRecipientStep(balanceCents: Cents, scenario?: ListScenario) {
     handleCreated,
     handleContinue,
   };
-}
+};

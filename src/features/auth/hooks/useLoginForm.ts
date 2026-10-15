@@ -6,7 +6,7 @@ import { loginSchema } from "@/domain/schemas";
 import { useLogin } from "./useLogin";
 
 // Form state and validation for LoginForm. The field is validated on blur and on submit.
-export function useLoginForm() {
+export const useLoginForm = () => {
   const { login, isLoading, error: apiError } = useLogin();
   const [identifier, setIdentifier] = useState("");
   const [touched, setTouched] = useState(false);
@@ -41,4 +41,4 @@ export function useLoginForm() {
     onBlur,
     onSubmit,
   };
-}
+};

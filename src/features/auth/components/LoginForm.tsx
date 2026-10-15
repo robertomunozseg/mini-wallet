@@ -11,7 +11,7 @@ const INPUT_MODE_BY_TYPE = {
   unknown: "text",
 } as const satisfies Record<IdentifierType, "email" | "tel" | "text">;
 
-export function LoginForm() {
+export const LoginForm = () => {
   const form = useLoginForm();
 
   return (
@@ -38,4 +38,4 @@ export function LoginForm() {
       </Button>
     </form>
   );
-}
+};

@@ -26,7 +26,7 @@ type RecipientStepProps = {
 
 const SKELETON_ROWS = 4;
 
-export function RecipientStep({ balanceCents, scenario }: RecipientStepProps) {
+export const RecipientStep = ({ balanceCents, scenario }: RecipientStepProps) => {
   const {
     query,
     setQuery,
@@ -172,4 +172,4 @@ export function RecipientStep({ balanceCents, scenario }: RecipientStepProps) {
       </div>
     </div>
   );
-}
+};

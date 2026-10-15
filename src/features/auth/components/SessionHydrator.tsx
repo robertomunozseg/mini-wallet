@@ -9,7 +9,7 @@ type SessionHydratorProps = { user: User };
 
 // Copies the user read on the server into the Redux store (it renders nothing).
 // Needed because the store is created empty and is not kept between page loads.
-export function SessionHydrator({ user }: SessionHydratorProps) {
+export const SessionHydrator = ({ user }: SessionHydratorProps) => {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
@@ -17,4 +17,4 @@ export function SessionHydrator({ user }: SessionHydratorProps) {
   }, [dispatch, user]);
 
   return null;
-}
+};

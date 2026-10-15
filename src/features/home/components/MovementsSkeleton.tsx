@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 const SKELETON_ROWS = 5;
 
 // Placeholder rows shown while the first page of movements loads.
-export function MovementsSkeleton() {
+export const MovementsSkeleton = () => {
   return (
     <div role="status">
       <span className="sr-only">Loading movements</span>
@@ -21,4 +21,4 @@ export function MovementsSkeleton() {
       </div>
     </div>
   );
-}
+};

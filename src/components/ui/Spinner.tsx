@@ -5,7 +5,7 @@ type SpinnerProps = {
   size?: "sm" | "md";
 };
 
-export function Spinner({ label = "Loading", size = "md" }: SpinnerProps) {
+export const Spinner = ({ label = "Loading", size = "md" }: SpinnerProps) => {
   return (
     <span role="status" className="inline-flex items-center">
       <svg
@@ -32,4 +32,4 @@ export function Spinner({ label = "Loading", size = "md" }: SpinnerProps) {
       <span className="sr-only">{label}</span>
     </span>
   );
-}
+};

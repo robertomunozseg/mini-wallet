@@ -16,7 +16,7 @@ type MovementsListProps = {
   initialPage?: Page<Movement>;
 };
 
-function MovementsBody({ scenario, initialPage }: MovementsListProps) {
+const MovementsBody = ({ scenario, initialPage }: MovementsListProps) => {
   const list = useMovements(scenario, initialPage);
 
   if (list.isLoading && list.items.length === 0) return <MovementsSkeleton />;
@@ -49,13 +49,12 @@ function MovementsBody({ scenario, initialPage }: MovementsListProps) {
       loadMore={list.loadMore}
     />
   );
-}
-
-export function MovementsList({ scenario, initialPage }: MovementsListProps) {
+};
+export const MovementsList = ({ scenario, initialPage }: MovementsListProps) => {
   return (
     <Card>
       <h2 className="mb-2 text-lg font-semibold text-zinc-900">Recent movements</h2>
       <MovementsBody scenario={scenario} initialPage={initialPage} />
     </Card>
   );
-}
+};

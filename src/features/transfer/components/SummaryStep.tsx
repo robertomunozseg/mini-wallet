@@ -27,11 +27,10 @@ type SummaryStepProps = {
 
 const DEMO_OPTIONS: readonly DemoScenario[] = ["random", ...SCENARIOS];
 
-function isDemoScenario(value: string): value is DemoScenario {
+const isDemoScenario = (value: string): value is DemoScenario => {
   return DEMO_OPTIONS.some((option) => option === value);
-}
-
-export function SummaryStep({ balanceCents, onConfirm }: SummaryStepProps) {
+};
+export const SummaryStep = ({ balanceCents, onConfirm }: SummaryStepProps) => {
   const dispatch = useAppDispatch();
   const amountCents = useAppSelector(selectAmountCents);
   const recipient = useAppSelector(selectRecipient);
@@ -102,4 +101,4 @@ export function SummaryStep({ balanceCents, onConfirm }: SummaryStepProps) {
       </Button>
     </div>
   );
-}
+};

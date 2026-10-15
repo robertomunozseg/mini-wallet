@@ -16,7 +16,7 @@ type UseNewContactFormOptions = {
 };
 
 // Form state, validation (newContactSchema) and the POST /contacts request for NewContactForm.
-export function useNewContactForm({ onCreated }: UseNewContactFormOptions) {
+export const useNewContactForm = ({ onCreated }: UseNewContactFormOptions) => {
   const [name, setName] = useState("");
   const [phoneOrEmail, setPhoneOrEmail] = useState("");
   const [isFavorite, setIsFavorite] = useState(false);
@@ -80,4 +80,4 @@ export function useNewContactForm({ onCreated }: UseNewContactFormOptions) {
     onPhoneOrEmailBlur: () => touch("phoneOrEmail"),
     onSubmit,
   };
-}
+};

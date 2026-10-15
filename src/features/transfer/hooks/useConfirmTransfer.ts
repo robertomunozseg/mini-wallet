@@ -36,7 +36,7 @@ type UseConfirmTransferResult = {
 
 // Sends POST /transactions for the transfer draft. The Idempotency-Key lives in the store, so
 // every retry of the same transfer sends the same key and the server never debits twice.
-export function useConfirmTransfer(): UseConfirmTransferResult {
+export const useConfirmTransfer = (): UseConfirmTransferResult => {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const store = useAppStore();
@@ -99,4 +99,4 @@ export function useConfirmTransfer(): UseConfirmTransferResult {
   }, []);
 
   return { state, confirm, retry: send, reset };
-}
+};

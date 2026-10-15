@@ -39,7 +39,7 @@ const PREVIOUS_STEP: Record<TransferStep, TransferStep | null> = {
   confirming: "summary",
 };
 
-export function TransferFlow({ balanceCents, scenario }: TransferFlowProps) {
+export const TransferFlow = ({ balanceCents, scenario }: TransferFlowProps) => {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const step = useAppSelector(selectTransferStep);
@@ -90,4 +90,4 @@ export function TransferFlow({ balanceCents, scenario }: TransferFlowProps) {
       </div>
     </div>
   );
-}
+};

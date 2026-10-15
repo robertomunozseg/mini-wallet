@@ -23,19 +23,18 @@ const ROW_HEIGHT_ESTIMATE = 73;
 // Rows rendered above and below the visible ones, so fast scrolling does not show blanks.
 const OVERSCAN = 5;
 
-function estimateRowHeight(): number {
+const estimateRowHeight = (): number => {
   return ROW_HEIGHT_ESTIMATE;
-}
-
+};
 // Only the rows near the viewport are in the DOM, however many movements are loaded: scrolling
 // a list of thousands costs the same as a list of ten. Scrolling to the end loads the next page.
-export function VirtualMovementList({
+export const VirtualMovementList = ({
   movements,
   hasMore,
   isLoadingMore,
   loadMoreError,
   loadMore,
-}: VirtualMovementListProps) {
+}: VirtualMovementListProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   // One extra row at the end while more pages exist: it shows "Loading more" and its arrival
   // in the rendered window is the signal to request the next page.
@@ -124,4 +123,4 @@ export function VirtualMovementList({
       </ul>
     </div>
   );
-}
+};

@@ -8,7 +8,7 @@ type SessionGateProps = { children: ReactNode };
 // Server Component. Reading the cookie is request-time data, so with Cache Components it must
 // render inside a <Suspense> boundary; the layout provides it.
 // It also copies the user into the Redux store, so every protected page can show it.
-export async function SessionGate({ children }: SessionGateProps) {
+export const SessionGate = async ({ children }: SessionGateProps) => {
   const session = await getSession();
   if (!session) redirect("/login");
 
@@ -18,4 +18,4 @@ export async function SessionGate({ children }: SessionGateProps) {
       {children}
     </>
   );
-}
+};

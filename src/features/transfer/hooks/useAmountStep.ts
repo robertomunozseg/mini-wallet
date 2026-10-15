@@ -20,7 +20,7 @@ const AMOUNT_RULES: TransferValidationError[] = [
   "INSUFFICIENT_BALANCE",
 ];
 
-export function useAmountStep(balanceCents: Cents) {
+export const useAmountStep = (balanceCents: Cents) => {
   const dispatch = useAppDispatch();
   const amountCents = useAppSelector(selectAmountCents);
   const validation = useAppSelector((state) => selectTransferValidation(state, balanceCents));
@@ -53,4 +53,4 @@ export function useAmountStep(balanceCents: Cents) {
     onBlur: () => setTouched(true),
     onSubmit,
   };
-}
+};
