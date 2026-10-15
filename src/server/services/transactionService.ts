@@ -5,7 +5,14 @@ import type { TransferRequest } from "@/domain/schemas";
 import type { Receipt, Transaction } from "@/domain/types";
 import { TRANSFER_ERROR_MESSAGES, validateTransfer } from "@/domain/transfer-rules";
 import { apiError } from "../api-error";
-import { addMovement, getBalance, getOutcome, saveOutcome, saveReceipt } from "../mock-db";
+import {
+  addMovement,
+  getBalance,
+  getOutcome,
+  getReceiptById,
+  saveOutcome,
+  saveReceipt,
+} from "../mock-db";
 import { sleep } from "../sleep";
 import { debit } from "./accountService";
 
@@ -112,3 +119,8 @@ export function createTransactionService(overrides: Partial<Deps> = {}) {
 }
 
 export const transactionService = createTransactionService();
+
+// The mock has one user, so any signed-in user can open any receipt.
+// With real users it would also check the owner.
+export const getReceipt = (transactionId: string): Receipt | null =>
+  getReceiptById(transactionId) ?? null;

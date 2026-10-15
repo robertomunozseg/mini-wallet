@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ChangeEvent, type FormEvent } from "react";
-import { detectIdentifierType } from "@/domain/identifier";
+import { detectIdentifierType } from "@/domain/schemas";
 import { loginSchema } from "@/domain/schemas";
 import { useLogin } from "./useLogin";
 

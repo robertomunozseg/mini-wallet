@@ -7,8 +7,8 @@ import { MovementItem } from "../components/MovementItem";
 // The component calls formatRelativeTime every time it renders, so counting its calls counts
 // renders: a skipped render (memo) makes no call.
 const formatCalls = vi.hoisted(() => vi.fn());
-vi.mock("@/domain/relative-time", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/domain/relative-time")>();
+vi.mock("@/domain/dates", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/domain/dates")>();
   return {
     ...actual,
     formatRelativeTime: (...args: Parameters<typeof actual.formatRelativeTime>) => {

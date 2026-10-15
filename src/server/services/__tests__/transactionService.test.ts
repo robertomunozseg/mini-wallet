@@ -1,7 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { asCents } from "@/domain/money";
 import { getBalance, listMovements, resetDb } from "../../mock-db";
-import { createTransactionService, TIMEOUT_DELAY_MS, timeoutDelayMs } from "../transactionService";
+import {
+  createTransactionService,
+  getReceipt,
+  TIMEOUT_DELAY_MS,
+  timeoutDelayMs,
+} from "../transactionService";
 
 const SEEDED_BALANCE = 1_250_000;
 
@@ -203,5 +208,38 @@ describe("timeoutDelayMs", () => {
 
   it.each(["", "abc", "0", "-5", "1.5", "NaN", "Infinity"])("ignores %j", (value) => {
     expect(timeoutDelayMs(value)).toBe(10_000);
+  });
+});
+
+beforeEach(() => {
+  resetDb();
+});
+
+describe("getReceipt", () => {
+  it("returns the receipt of a completed transfer, by transaction id", async () => {
+    const service = createTransactionService({ newId: () => "tx-1" });
+    const created = await service.create(
+      { amountCents: asCents(50_000), recipient: "Ana García" },
+      "key-1",
+      "success",
+    );
+
+    expect(created.ok).toBe(true);
+    expect(getReceipt("tx-1")).toEqual(created.ok ? created.value : null);
+  });
+
+  it("returns null for an unknown id", () => {
+    expect(getReceipt("nope")).toBeNull();
+  });
+
+  it("does not create a receipt for a failed transfer", async () => {
+    const service = createTransactionService({ newId: () => "tx-1" });
+    await service.create(
+      { amountCents: asCents(1_000), recipient: "Ana" },
+      "key-1",
+      "unknown_error",
+    );
+
+    expect(getReceipt("tx-1")).toBeNull();
   });
 });

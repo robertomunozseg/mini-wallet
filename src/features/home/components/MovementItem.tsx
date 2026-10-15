@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { formatMoney } from "@/domain/money";
-import { formatRelativeTime } from "@/domain/relative-time";
+import { formatRelativeTime } from "@/domain/dates";
 import type { Movement, MovementStatus } from "@/domain/types";
 import { classNames } from "@/lib/class-names";
 

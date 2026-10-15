@@ -6,7 +6,6 @@ import { SCENARIOS } from "@/domain/api";
 import { formatMoney, subtractCents } from "@/domain/money";
 import { TRANSFER_ERROR_MESSAGES } from "@/domain/transfer-rules";
 import type { Cents } from "@/domain/types";
-import { isDemoMode } from "@/lib/demo-mode";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   selectAmountCents,
@@ -16,6 +15,10 @@ import {
   setDemoScenario,
   type DemoScenario,
 } from "@/store/slices/transferSlice";
+
+// With NEXT_PUBLIC_DEMO_MODE=true the summary shows a selector to force a scenario.
+// A function, so the variable is read when the component renders (tests change it).
+const isDemoMode = () => process.env.NEXT_PUBLIC_DEMO_MODE === "true";
 
 type SummaryStepProps = {
   balanceCents: Cents;

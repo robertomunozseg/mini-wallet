@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   contactsQuerySchema,
+  detectIdentifierType,
   loginSchema,
   movementsQuerySchema,
   newContactSchema,
@@ -124,5 +125,22 @@ describe("contactsQuerySchema", () => {
   it("validates limit like the movements query", () => {
     expect(contactsQuerySchema.safeParse({ limit: "100" }).success).toBe(false);
     expect(contactsQuerySchema.parse({ q: "ana", limit: "5" })).toEqual({ q: "ana", limit: 5 });
+  });
+});
+
+describe("detectIdentifierType", () => {
+  it.each(["ana@example.com", "ana@", "@", "  ana@example.com  "])(
+    "detects %j as email",
+    (value) => {
+      expect(detectIdentifierType(value)).toBe("email");
+    },
+  );
+
+  it.each(["5512345678", "55 1234 5678", "55-1234-5678", "5"])("detects %j as phone", (value) => {
+    expect(detectIdentifierType(value)).toBe("phone");
+  });
+
+  it.each(["", "   ", "ana", "55ab", "+525512345678"])("detects %j as unknown", (value) => {
+    expect(detectIdentifierType(value)).toBe("unknown");
   });
 });

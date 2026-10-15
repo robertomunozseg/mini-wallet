@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import type { IdentifierType } from "@/domain/identifier";
+import type { IdentifierType } from "@/domain/schemas";
 import { useLoginForm } from "../hooks/useLoginForm";
 
 const INPUT_MODE_BY_TYPE = {
