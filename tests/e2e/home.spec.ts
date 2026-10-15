@@ -15,6 +15,11 @@ test.describe("home", () => {
     expect(await page.getByRole("listitem").count()).toBeGreaterThanOrEqual(6);
   });
 
+  test("the root goes to /home when signed in", async ({ signedIn: page }) => {
+    await page.goto("/");
+    await expect(page).toHaveURL(/\/home$/);
+  });
+
   test("has a New transfer link", async ({ signedIn: page }) => {
     await expect(page.getByRole("link", { name: "New transfer" })).toHaveAttribute(
       "href",

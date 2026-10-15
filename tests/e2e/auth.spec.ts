@@ -8,6 +8,11 @@ test.describe("auth flow", () => {
     await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
   });
 
+  test("the root goes to /login without a session", async ({ page }) => {
+    await page.goto("/");
+    await expect(page).toHaveURL(/\/login$/);
+  });
+
   test("validates the field on blur", async ({ page }) => {
     await page.goto("/login");
 
