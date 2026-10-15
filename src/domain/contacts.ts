@@ -15,40 +15,16 @@ export const filterContacts = (contacts: readonly Contact[], query: string): Con
   );
 };
 
-// What contacts are sorted by. The pagination cursor stores it, so it is plain data.
-type ContactKey = { isFavorite: boolean; name: string; id: string };
-
-export const contactKey = (contact: Contact): ContactKey => ({
-  isFavorite: contact.isFavorite,
-  name: normalize(contact.name),
-  id: contact.id,
-});
-
-export const isContactKey = (value: unknown): value is ContactKey =>
-  typeof value === "object" &&
-  value !== null &&
-  "isFavorite" in value &&
-  typeof value.isFavorite === "boolean" &&
-  "name" in value &&
-  typeof value.name === "string" &&
-  "id" in value &&
-  typeof value.id === "string";
-
-// Favorites first, then by name, then by id. The id breaks ties, so two contacts are never equal
-// and the cursor always points to exactly one place.
-const compareContactKeys = (a: ContactKey, b: ContactKey): number => {
-  if (a.isFavorite !== b.isFavorite) return a.isFavorite ? -1 : 1;
-  if (a.name !== b.name) return a.name < b.name ? -1 : 1;
-  if (a.id !== b.id) return a.id < b.id ? -1 : 1;
-  return 0;
-};
-
+// Favorites first, then by name, then by id. The id breaks ties, so the order is always the same.
 export const sortContacts = (contacts: readonly Contact[]): Contact[] =>
-  [...contacts].sort((a, b) => compareContactKeys(contactKey(a), contactKey(b)));
-
-// True when the contact comes after the cursor in the sort order.
-export const isContactAfter = (contact: Contact, key: ContactKey): boolean =>
-  compareContactKeys(contactKey(contact), key) > 0;
+  [...contacts].sort((a, b) => {
+    if (a.isFavorite !== b.isFavorite) return a.isFavorite ? -1 : 1;
+    const nameA = normalize(a.name);
+    const nameB = normalize(b.name);
+    if (nameA !== nameB) return nameA < nameB ? -1 : 1;
+    if (a.id !== b.id) return a.id < b.id ? -1 : 1;
+    return 0;
+  });
 
 // Splits a sorted list into favorites and the rest, keeping the order.
 export const groupContacts = (

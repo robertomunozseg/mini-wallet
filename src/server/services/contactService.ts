@@ -1,11 +1,5 @@
 import type { ListScenario } from "@/domain/api";
-import {
-  contactKey,
-  filterContacts,
-  isContactAfter,
-  isContactKey,
-  sortContacts,
-} from "@/domain/contacts";
+import { filterContacts, sortContacts } from "@/domain/contacts";
 import type { ApiError } from "@/domain/errors";
 import { paginate, type Page } from "@/domain/pagination";
 import { err, ok, type Result } from "@/domain/result";
@@ -35,9 +29,7 @@ export const list = ({
   const page = paginate(filterContacts(source, q), {
     limit,
     cursor,
-    keyOf: contactKey,
-    isKey: isContactKey,
-    isAfter: isContactAfter,
+    idOf: (contact) => contact.id,
   });
   if (!page.ok) return err(apiError("VALIDATION_ERROR", "The cursor is not valid."));
   return page;

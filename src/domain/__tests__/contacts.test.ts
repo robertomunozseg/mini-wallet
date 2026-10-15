@@ -1,12 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  contactKey,
-  filterContacts,
-  groupContacts,
-  isContactAfter,
-  isContactKey,
-  sortContacts,
-} from "../contacts";
+import { filterContacts, groupContacts, sortContacts } from "../contacts";
 import type { Contact } from "../types";
 
 const contacts: Contact[] = [
@@ -89,56 +82,6 @@ describe("sortContacts", () => {
     const original = [...contacts];
     sortContacts(contacts);
     expect(contacts).toEqual(original);
-  });
-});
-
-describe("isContactAfter", () => {
-  const ana = contacts[2];
-  if (!ana) throw new Error("fixture missing");
-  const key = contactKey(ana);
-
-  it("is true for contacts that sort later", () => {
-    expect(isContactAfter({ ...ana, id: "x", name: "Beatriz" }, key)).toBe(true);
-  });
-
-  it("is true for any non-favorite when the key belongs to a favorite", () => {
-    expect(isContactAfter({ ...ana, id: "x", name: "Aaron", isFavorite: false }, key)).toBe(true);
-  });
-
-  it("is false for contacts that sort earlier", () => {
-    expect(isContactAfter({ ...ana, id: "x", name: "Aaron" }, key)).toBe(false);
-  });
-
-  it("is false for the contact of the key itself", () => {
-    expect(isContactAfter(ana, key)).toBe(false);
-  });
-
-  it("is false for a favorite when the key belongs to a non-favorite", () => {
-    const carlos = contacts[0];
-    if (!carlos) throw new Error("fixture missing");
-    expect(isContactAfter(ana, contactKey(carlos))).toBe(false);
-  });
-});
-
-describe("contactKey and isContactKey", () => {
-  it("stores the normalized name", () => {
-    const luis = contacts[3];
-    if (!luis) throw new Error("fixture missing");
-    expect(contactKey(luis)).toEqual({ isFavorite: true, name: "luis hernandez", id: "4" });
-  });
-
-  it("accepts a key", () => {
-    expect(isContactKey({ isFavorite: false, name: "ana", id: "1" })).toBe(true);
-  });
-
-  it.each([
-    null,
-    "x",
-    {},
-    { isFavorite: "yes", name: "a", id: "1" },
-    { isFavorite: true, id: "1" },
-  ])("rejects %j", (value) => {
-    expect(isContactKey(value)).toBe(false);
   });
 });
 

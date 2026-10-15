@@ -1,6 +1,5 @@
 import type { ListScenario } from "@/domain/api";
 import type { ApiError } from "@/domain/errors";
-import { isMovementAfter, isMovementKey, movementKey } from "@/domain/movements";
 import { paginate, type Page } from "@/domain/pagination";
 import { err, ok, type Result } from "@/domain/result";
 import type { Movement } from "@/domain/types";
@@ -23,13 +22,7 @@ export const list = ({ limit, cursor, scenario }: ListParams): Result<Page<Movem
   if (scenario === "empty") return ok({ items: [], nextCursor: null });
 
   const source = scenario === "large" ? largeMovements() : listMovements();
-  const page = paginate(source, {
-    limit,
-    cursor,
-    keyOf: movementKey,
-    isKey: isMovementKey,
-    isAfter: isMovementAfter,
-  });
+  const page = paginate(source, { limit, cursor, idOf: (movement) => movement.id });
   if (!page.ok) return err(apiError("VALIDATION_ERROR", "The cursor is not valid."));
   return page;
 };
