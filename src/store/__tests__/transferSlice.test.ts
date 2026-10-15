@@ -5,9 +5,7 @@ import reducer, {
   goToStep,
   reset,
   selectDemoScenario,
-  selectIdempotencyKey,
   selectRecipient,
-  selectTransferDraft,
   selectTransferStep,
   selectTransferValidation,
   setAmount,
@@ -128,21 +126,7 @@ describe("transferSlice selectors", () => {
     const state = store.getState();
     expect(selectTransferStep(state)).toBe("summary");
     expect(selectRecipient(state)).toBe("Ana");
-    expect(selectIdempotencyKey(state)).toBeNull();
     expect(selectDemoScenario(state)).toBe("random");
-  });
-
-  it("selectTransferDraft returns the same reference while the draft does not change", () => {
-    const store = makeStore();
-    store.dispatch(setRecipient("Ana"));
-    const first = selectTransferDraft(store.getState());
-    expect(first).toEqual({ amountCents: null, recipient: "Ana" });
-
-    store.dispatch(goToStep("summary")); // unrelated change
-    expect(selectTransferDraft(store.getState())).toBe(first);
-
-    store.dispatch(setAmount(asCents(100)));
-    expect(selectTransferDraft(store.getState())).not.toBe(first);
   });
 
   describe("selectTransferValidation", () => {

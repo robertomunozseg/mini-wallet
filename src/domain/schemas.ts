@@ -55,7 +55,5 @@ export const movementsQuerySchema = z.object({
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;
-export type ContactsQuery = z.infer<typeof contactsQuerySchema>;
-export type MovementsQuery = z.infer<typeof movementsQuerySchema>;
 export type NewContactInput = z.infer<typeof newContactSchema>;
 export type TransferRequest = z.infer<typeof transferRequestSchema>;

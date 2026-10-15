@@ -1,7 +1,7 @@
 import type { Movement } from "./types";
 
 // What a movement is sorted by. Pagination cursors store it, so it must be plain data.
-export type MovementKey = { createdAt: string; id: string };
+type MovementKey = { createdAt: string; id: string };
 
 export function movementKey(movement: Movement): MovementKey {
   return { createdAt: movement.createdAt, id: movement.id };

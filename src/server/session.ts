@@ -5,7 +5,7 @@ import { isValidSessionToken, MOCK_SESSION_TOKEN, SESSION_COOKIE } from "./sessi
 
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 8;
 
-export type Session = { user: User };
+type Session = { user: User };
 
 export async function createSession(): Promise<void> {
   const cookieStore = await cookies();

@@ -2,6 +2,7 @@ import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 import {
   alertWithText,
+  enterAmount,
   forceScenario,
   homeBalance,
   openTransfer,
@@ -210,8 +211,7 @@ test.describe("successful transfer and receipt", () => {
 test.describe("transfer with a large address book (?scenario=large)", () => {
   async function openRecipientStep(page: Page) {
     await page.goto("/transfer?scenario=large");
-    await page.getByLabel("Amount (MXN)").fill("10");
-    await page.getByRole("button", { name: "Continue" }).click();
+    await enterAmount(page, "10");
     await expect(page.getByRole("radio").first()).toBeVisible();
   }
 

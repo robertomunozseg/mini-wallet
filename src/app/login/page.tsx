@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/Card";
 import { LoginForm } from "@/features/auth/components/LoginForm";
 
 export const metadata: Metadata = {
-  title: "Sign in | Mini Wallet",
+  title: "Sign in",
 };
 
 export default function LoginPage() {

@@ -1,7 +1,7 @@
 import { createSelector, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { Scenario } from "@/domain/api";
 import { validateTransfer } from "@/domain/transfer-rules";
-import type { Cents, TransferDraft } from "@/domain/types";
+import type { Cents } from "@/domain/types";
 
 // The request itself (processing, error, success) lives in useConfirmTransfer: the store only
 // keeps what must survive between steps.
@@ -85,13 +85,7 @@ export default transferSlice.reducer;
 export const selectTransferStep = (state: StateWithTransfer) => state.transfer.step;
 export const selectAmountCents = (state: StateWithTransfer) => state.transfer.amountCents;
 export const selectRecipient = (state: StateWithTransfer) => state.transfer.recipient;
-export const selectIdempotencyKey = (state: StateWithTransfer) => state.transfer.idempotencyKey;
 export const selectDemoScenario = (state: StateWithTransfer) => state.transfer.demoScenario;
-
-export const selectTransferDraft = createSelector(
-  [selectAmountCents, selectRecipient],
-  (amountCents, recipient): TransferDraft => ({ amountCents, recipient }),
-);
 
 // The balance is server data (not in Redux), so it is passed as the second argument:
 // selectTransferValidation(state, balanceCents).

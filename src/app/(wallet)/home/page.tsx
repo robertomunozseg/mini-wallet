@@ -1,13 +1,15 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Card } from "@/components/ui/Card";
 import { parseListScenario } from "@/domain/api";
-import { SessionHydrator } from "@/features/auth/components/SessionHydrator";
 import { BalanceCard } from "@/features/home/components/BalanceCard";
 import { MovementsSection } from "@/features/home/components/MovementsSection";
 import { MovementsSkeleton } from "@/features/home/components/MovementsSkeleton";
 import { getSession } from "@/server/session";
 import { getAccount } from "@/server/services/accountService";
+
+export const metadata: Metadata = { title: "Home" };
 
 export default async function HomePage({ searchParams }: PageProps<"/home">) {
   const [session, params] = await Promise.all([getSession(), searchParams]);
@@ -21,8 +23,7 @@ export default async function HomePage({ searchParams }: PageProps<"/home">) {
   const movementsScenario = parseListScenario(typeof scenario === "string" ? scenario : null);
 
   return (
-    <main>
-      <SessionHydrator user={session.user} />
+    <main id="main-content" tabIndex={-1} className="focus:outline-none">
       <h1 className="mb-4 text-2xl font-semibold text-zinc-900">Home</h1>
       <div className="grid gap-6 md:grid-cols-[2fr_3fr] md:items-start">
         <BalanceCard name={session.user.name} balanceCents={account.balanceCents} />

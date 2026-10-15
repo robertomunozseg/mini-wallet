@@ -1,15 +1,10 @@
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Card } from "@/components/ui/Card";
+import { formatDateTime } from "@/domain/format-date";
 import { formatMoney } from "@/domain/money";
 import type { Receipt } from "@/domain/types";
 
 type ReceiptViewProps = { receipt: Receipt };
-
-const dateFormatter = new Intl.DateTimeFormat("en-US", {
-  dateStyle: "long",
-  timeStyle: "short",
-  timeZone: "America/Mexico_City",
-});
 
 export function ReceiptView({ receipt }: ReceiptViewProps) {
   const { transaction, newBalanceCents } = receipt;
@@ -29,9 +24,7 @@ export function ReceiptView({ receipt }: ReceiptViewProps) {
           </div>
           <div className="flex justify-between gap-4">
             <dt className="text-zinc-600">Date</dt>
-            <dd className="text-right text-zinc-900">
-              {dateFormatter.format(new Date(transaction.createdAt))}
-            </dd>
+            <dd className="text-right text-zinc-900">{formatDateTime(transaction.createdAt)}</dd>
           </div>
           <div className="flex justify-between gap-4">
             <dt className="text-zinc-600">Amount</dt>

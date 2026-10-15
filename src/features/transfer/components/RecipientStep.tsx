@@ -1,25 +1,15 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { Input } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
 import type { ListScenario } from "@/domain/api";
-import { groupContacts } from "@/domain/contacts";
 import { TRANSFER_ERROR_MESSAGES } from "@/domain/transfer-rules";
-import type { Cents, Contact } from "@/domain/types";
-import { useDebouncedValue } from "@/lib/use-debounced-value";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import {
-  goToStep,
-  selectRecipient,
-  selectTransferValidation,
-  setRecipient,
-} from "@/store/slices/transferSlice";
-import { useContacts } from "../hooks/useContacts";
+import type { Cents } from "@/domain/types";
+import { useRecipientStep } from "../hooks/useRecipientStep";
 import { ContactGroup } from "./ContactGroup";
 
 // The form is only needed when the user taps "New contact", so its code is loaded on demand
@@ -35,63 +25,28 @@ type RecipientStepProps = {
 };
 
 const SKELETON_ROWS = 4;
-// How long the user must stop typing before the search request is sent.
-export const SEARCH_DEBOUNCE_MS = 300;
 
 export function RecipientStep({ balanceCents, scenario }: RecipientStepProps) {
-  const dispatch = useAppDispatch();
-  const recipient = useAppSelector(selectRecipient);
-  const validation = useAppSelector((state) => selectTransferValidation(state, balanceCents));
-
-  // `query` is what the input shows (updated on every key); `debouncedQuery` is what is searched.
-  const [query, setQuery] = useState("");
-  const debouncedQuery = useDebouncedValue(query, SEARCH_DEBOUNCE_MS);
+  const {
+    query,
+    setQuery,
+    debouncedQuery,
+    isSearching,
+    contacts,
+    groups,
+    selectedId,
+    recipient,
+    recipientMissing,
+    attempted,
+    showForm,
+    toggleForm,
+    closeForm,
+    handleSelect,
+    handleCreated,
+    handleContinue,
+  } = useRecipientStep(balanceCents, scenario);
   const { items, isLoading, isLoadingMore, error, loadMoreError, hasMore, loadMore, refetch } =
-    useContacts(debouncedQuery, scenario);
-
-  const [showForm, setShowForm] = useState(false);
-  const [attempted, setAttempted] = useState(false);
-  // The store only keeps the recipient name (what the API receives), and two contacts can share a
-  // name, so the chosen contact is tracked by id here. Coming back to this step, the first
-  // contact with the stored name is shown as selected.
-  const [chosenId, setChosenId] = useState<string | null>(null);
-
-  // The server already sorted favorites first; this only splits the list in two groups. useMemo
-  // keeps the same arrays between renders, which lets the memoized groups skip re-rendering.
-  const groups = useMemo(() => groupContacts(items), [items]);
-
-  const isSearching = query.trim() !== debouncedQuery.trim() || isLoading;
-  const recipientMissing = !validation.ok && validation.error.includes("RECIPIENT_REQUIRED");
-  const selectedId =
-    chosenId ?? (recipient === "" ? null : (items.find((c) => c.name === recipient)?.id ?? null));
-
-  // useCallback: ContactOption is memoized and receives this function; a new one on every render
-  // would make every option re-render each time.
-  const handleSelect = useCallback(
-    (contact: Contact) => {
-      setChosenId(contact.id);
-      dispatch(setRecipient(contact.name));
-    },
-    [dispatch],
-  );
-
-  const handleCreated = useCallback(
-    (contact: Contact) => {
-      setChosenId(contact.id);
-      dispatch(setRecipient(contact.name));
-      refetch();
-      setShowForm(false);
-    },
-    [dispatch, refetch],
-  );
-
-  const handleCancelForm = useCallback(() => setShowForm(false), []);
-
-  function handleContinue() {
-    setAttempted(true);
-    if (recipientMissing) return;
-    dispatch(goToStep("summary"));
-  }
+    contacts;
 
   function renderContacts() {
     if (isLoading && items.length === 0) {
@@ -174,7 +129,7 @@ export function RecipientStep({ balanceCents, scenario }: RecipientStepProps) {
           aria-label="New contact"
           title="New contact"
           aria-expanded={showForm}
-          onClick={() => setShowForm((open) => !open)}
+          onClick={toggleForm}
           className="w-11 px-0 text-xl"
         >
           <span aria-hidden="true">+</span>
@@ -191,7 +146,7 @@ export function RecipientStep({ balanceCents, scenario }: RecipientStepProps) {
         aria-label="Contacts"
         className="flex max-h-[max(12rem,calc(100dvh-34rem))] flex-col gap-4 overflow-y-auto"
       >
-        {showForm && <NewContactForm onCreated={handleCreated} onCancel={handleCancelForm} />}
+        {showForm && <NewContactForm onCreated={handleCreated} onCancel={closeForm} />}
 
         {renderContacts()}
       </div>
