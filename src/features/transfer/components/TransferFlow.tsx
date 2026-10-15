@@ -68,7 +68,10 @@ export function TransferFlow({ balanceCents, scenario }: TransferFlowProps) {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-xl flex-col gap-6">
+    // The flow is as tall as what is left of the window (see --wallet-chrome in globals.css), so a
+    // long contact list scrolls inside itself instead of making the page scroll. Below 30rem there
+    // is not enough room for the steps, so the page scrolls then.
+    <div className="mx-auto flex h-[calc(100dvh-var(--wallet-chrome))] max-h-[50rem] min-h-[30rem] w-full max-w-xl flex-col gap-6 short:gap-3">
       <div>
         <Button variant="ghost" onClick={handleBack} disabled={isSending} className="-ml-4">
           ← Back
@@ -77,7 +80,7 @@ export function TransferFlow({ balanceCents, scenario }: TransferFlowProps) {
 
       <StepIndicator steps={STEP_LABELS} currentIndex={INDICATOR_INDEX[step]} />
 
-      <div key={flowId}>
+      <div key={flowId} className="flex min-h-0 flex-1 flex-col">
         {step === "amount" && <AmountStep balanceCents={balanceCents} />}
         {step === "recipient" && <RecipientStep balanceCents={balanceCents} scenario={scenario} />}
         {step === "summary" && <SummaryStep balanceCents={balanceCents} onConfirm={confirm} />}

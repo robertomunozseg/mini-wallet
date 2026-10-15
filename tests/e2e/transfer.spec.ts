@@ -82,6 +82,29 @@ test.describe("transfer flow", () => {
     await expect(next).not.toHaveAttribute("aria-disabled", "true");
   });
 
+  test("on a short laptop window the page does not scroll, the list does and Continue is visible", async ({
+    signedIn: page,
+  }) => {
+    // A laptop with 150% display scaling leaves about 1273x590 CSS pixels.
+    await page.setViewportSize({ width: 1273, height: 590 });
+    await reachRecipientStep(page, "1");
+    await expect(page.getByRole("radio").first()).toBeVisible();
+
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => document.documentElement.scrollHeight - document.documentElement.clientHeight,
+        ),
+      )
+      .toBeLessThanOrEqual(0);
+    const list = page.getByRole("region", { name: "Contacts" });
+    expect(await list.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(
+      true,
+    );
+    const next = await page.getByRole("button", { name: "Continue" }).boundingBox();
+    expect((next?.y ?? 0) + (next?.height ?? 0)).toBeLessThanOrEqual(590);
+  });
+
   test("walks through amount, recipient and summary", async ({ signedIn: page }) => {
     await reachSummary(page, "100");
 
