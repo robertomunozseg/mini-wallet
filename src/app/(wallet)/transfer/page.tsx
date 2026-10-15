@@ -20,7 +20,8 @@ export default async function TransferPage({ searchParams }: PageProps<"/transfe
 
   return (
     <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-xl focus:outline-none">
-      <h1 className="mb-4 text-2xl font-semibold text-zinc-900">New transfer</h1>
+      {/* Hidden visually in short windows to save space; screen readers still get it. */}
+      <h1 className="mb-4 text-2xl font-semibold text-zinc-900 short:sr-only">New transfer</h1>
       <TransferFlow
         balanceCents={account.balanceCents}
         scenario={scenario === "large" ? scenario : undefined}

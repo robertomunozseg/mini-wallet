@@ -72,7 +72,10 @@ export function VirtualMovementList({
       role="region"
       aria-label="Movements"
       tabIndex={0}
-      className="max-h-[max(20rem,calc(100dvh-18rem))] overflow-auto focus-visible:outline-2 focus-visible:outline-blue-600"
+      // Only this list scrolls, not the page. The height is what is left of the window: on a phone the
+      // balance card sits above the list (it starts ~26rem down), from md they sit side by side.
+      // overscroll-contain keeps the page still when the list reaches its end.
+      className="max-h-[max(14rem,calc(100dvh-29rem))] overflow-auto overscroll-contain focus-visible:outline-2 focus-visible:outline-blue-600 md:max-h-[max(20rem,calc(100dvh-18rem))]"
     >
       <ul className="relative" style={{ height: virtualizer.getTotalSize() }}>
         {virtualRows.map((row) => {

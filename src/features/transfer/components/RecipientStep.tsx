@@ -90,7 +90,7 @@ export function RecipientStep({ balanceCents, scenario }: RecipientStepProps) {
           onSelect={handleSelect}
         />
         <ContactGroup
-          title="All contacts"
+          title="Other contacts"
           contacts={groups.others}
           selectedId={selectedId}
           onSelect={handleSelect}
@@ -110,7 +110,7 @@ export function RecipientStep({ balanceCents, scenario }: RecipientStepProps) {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-4 short:gap-2">
       <h2 className="text-xl font-semibold text-zinc-900">Who is receiving it?</h2>
 
       <div className="flex items-end gap-2">
@@ -139,20 +139,20 @@ export function RecipientStep({ balanceCents, scenario }: RecipientStepProps) {
         {isSearching ? "Searching…" : ""}
       </p>
 
-      {/* Only this area scrolls, so the page itself does not: its height is what is left of the
-          window after the header, the steps and the search box above and the Continue bar below. */}
+      {/* Only this area scrolls, so the page does not: it takes the height the flow has left after the
+          steps, the search box and the Continue bar. */}
       <div
         role="region"
         aria-label="Contacts"
-        className="flex max-h-[max(12rem,calc(100dvh-34rem))] flex-col gap-4 overflow-y-auto"
+        className="flex min-h-24 flex-1 flex-col gap-4 overflow-y-auto"
       >
         {showForm && <NewContactForm onCreated={handleCreated} onCancel={closeForm} />}
 
         {renderContacts()}
       </div>
 
-      {/* Sticky: Continue stays visible however long the contact list is. */}
-      <div className="sticky bottom-0 -mx-4 flex flex-col gap-2 border-t border-zinc-200 bg-white px-4 py-3">
+      {/* Always visible below the list, however long the list is. */}
+      <div className="flex shrink-0 flex-col gap-2 border-t border-zinc-200 pt-3 short:gap-1 short:pt-2">
         <p aria-live="polite" className="text-sm text-zinc-600">
           {recipient.trim() !== "" && (
             <>
@@ -166,7 +166,9 @@ export function RecipientStep({ balanceCents, scenario }: RecipientStepProps) {
           </p>
         )}
 
-        <Button onClick={handleContinue}>Continue</Button>
+        <Button onClick={handleContinue} incomplete={recipientMissing}>
+          Continue
+        </Button>
       </div>
     </div>
   );

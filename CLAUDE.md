@@ -10,7 +10,7 @@ El autor será entrevistado sobre este código y modificará partes en vivo: **p
 - Responde al usuario en **español**.
 - Código, nombres de archivos, variables, tipos y mensajes de commit: **inglés**.
 - Textos visibles en la UI: **Ingles**.
-- README.md y DECISIONS.md: **inglés**. AI_USAGE.md: **español**.
+- README.md: **inglés**. DECISIONS.md y AI_USAGE.md: **español**.
 
 ## Stack (no cambiar sin preguntar)
 - Next.js App Router, TypeScript `strict` + `noUncheckedIndexedAccess`
@@ -19,7 +19,7 @@ El autor será entrevistado sobre este código y modificará partes en vivo: **p
 - Validación: **Zod** + funciones puras de dominio
 - Estilos: Tailwind CSS
 - Tests: Vitest + Testing Library (unit) · Playwright (e2e)
-- Deploy: Vercel
+- Ejecución: local (`npm run dev` / `npm start`); por ahora sin despliegue
 
 ## Arquitectura y reglas de capas
 ```

@@ -40,7 +40,10 @@ test.describe("transfer flow", () => {
     await openTransfer(page);
     const amount = page.getByLabel("Amount (MXN)");
 
-    await page.getByRole("button", { name: "Continue" }).click();
+    // Grey (aria-disabled) while the amount is not valid, but still pressable to see why.
+    const next = page.getByRole("button", { name: "Continue" });
+    await expect(next).toHaveAttribute("aria-disabled", "true");
+    await next.click({ force: true });
     await expect(alertWithText(page, "Enter an amount.")).toBeVisible();
 
     await amount.fill("0");
@@ -48,7 +51,7 @@ test.describe("transfer flow", () => {
 
     await amount.fill("999999999");
     await expect(alertWithText(page, "Insufficient balance.")).toBeVisible();
-    await page.getByRole("button", { name: "Continue" }).click();
+    await next.click({ force: true });
     // Still on the amount step: it cannot continue with more than the balance.
     await expect(
       page.getByRole("heading", { name: "How much do you want to send?" }),
@@ -56,6 +59,7 @@ test.describe("transfer flow", () => {
 
     await amount.fill("1,250.50");
     await expect(page.getByLabel("Amount (MXN)")).not.toHaveAttribute("aria-invalid", "true");
+    await expect(next).not.toHaveAttribute("aria-disabled", "true");
   });
 
   test("does not continue without a recipient", async ({ signedIn: page }) => {
@@ -65,11 +69,40 @@ test.describe("transfer flow", () => {
     await expect(page.getByRole("group", { name: "Favorites" })).toBeVisible();
     await expect(page.getByRole("radio").first()).toBeVisible();
 
-    await page.getByRole("button", { name: "Continue" }).click();
+    const next = page.getByRole("button", { name: "Continue" });
+    await expect(next).toHaveAttribute("aria-disabled", "true");
+    await next.click({ force: true });
 
     await expect(alertWithText(page, "Choose a recipient.")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Who is receiving it?" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Confirm" })).toHaveCount(0);
+
+    // Choosing a contact makes Continue available.
+    await page.getByRole("radio", { name: /Ana García/ }).check();
+    await expect(next).not.toHaveAttribute("aria-disabled", "true");
+  });
+
+  test("on a short laptop window the page does not scroll, the list does and Continue is visible", async ({
+    signedIn: page,
+  }) => {
+    // A laptop with 150% display scaling leaves about 1273x590 CSS pixels.
+    await page.setViewportSize({ width: 1273, height: 590 });
+    await reachRecipientStep(page, "1");
+    await expect(page.getByRole("radio").first()).toBeVisible();
+
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => document.documentElement.scrollHeight - document.documentElement.clientHeight,
+        ),
+      )
+      .toBeLessThanOrEqual(0);
+    const list = page.getByRole("region", { name: "Contacts" });
+    expect(await list.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(
+      true,
+    );
+    const next = await page.getByRole("button", { name: "Continue" }).boundingBox();
+    expect((next?.y ?? 0) + (next?.height ?? 0)).toBeLessThanOrEqual(590);
   });
 
   test("walks through amount, recipient and summary", async ({ signedIn: page }) => {
@@ -193,6 +226,11 @@ test.describe("successful transfer and receipt", () => {
       page.getByRole("heading", { name: "How much do you want to send?" }),
     ).toBeVisible();
     await expect(page.getByLabel("Amount (MXN)")).toHaveValue("");
+    // The result of the last transfer must not leave Back disabled in the new one.
+    const back = page.getByRole("button", { name: /Back/ });
+    await expect(back).toBeEnabled();
+    await back.click();
+    await expect(page).toHaveURL(/\/home$/);
   });
 
   test("an unknown receipt shows Receipt not found", async ({ signedIn: page }) => {

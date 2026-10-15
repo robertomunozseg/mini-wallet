@@ -17,7 +17,7 @@ export default function WalletLayout({ children }: WalletLayoutProps) {
         Skip to content
       </a>
       <header className="border-b border-zinc-200 bg-white">
-        <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-3">
+        <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-3 short:py-1">
           <span className="text-lg font-semibold text-zinc-900">Mini Wallet</span>
           <div className="flex items-center gap-3">
             <CurrentUser />
@@ -25,7 +25,7 @@ export default function WalletLayout({ children }: WalletLayoutProps) {
           </div>
         </div>
       </header>
-      <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">
+      <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 short:py-3">
         {/* The proxy is only an optimistic check, so the session is verified here too. */}
         <Suspense fallback={<Spinner label="Loading your wallet" />}>
           <SessionGate>{children}</SessionGate>

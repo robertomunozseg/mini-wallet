@@ -29,7 +29,9 @@ export function AmountStep({ balanceCents }: AmountStepProps) {
         autoComplete="off"
         placeholder="0.00"
       />
-      <Button type="submit">Continue</Button>
+      <Button type="submit" incomplete={!step.isComplete}>
+        Continue
+      </Button>
     </form>
   );
 }

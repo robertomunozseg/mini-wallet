@@ -34,6 +34,7 @@ export function useLoginForm() {
     identifier,
     identifierType: detectIdentifierType(identifier),
     fieldError,
+    isComplete: validation.success,
     isLoading,
     apiError,
     onChange,

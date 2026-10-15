@@ -1,1 +1,19 @@
 @import "tailwindcss";
+
+/* A window that is short in height (a laptop with display scaling, a phone turned sideways).
+   Components use `short:` to save vertical space. */
+@custom-variant short (@media (max-height: 44rem));
+
+/* Vertical space used above the transfer flow: the header, the page padding and the title.
+   The flow fills what is left of the window, so the contact list gets the remaining height
+   without measuring every piece above it. In short windows the header and padding shrink
+   and the title is hidden visually, so the value is smaller. */
+:root {
+  --wallet-chrome: 10.5rem;
+}
+
+@media (max-height: 44rem) {
+  :root {
+    --wallet-chrome: 5.5rem;
+  }
+}

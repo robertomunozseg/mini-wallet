@@ -33,7 +33,7 @@ export function LoginForm() {
           {form.apiError.message}
         </div>
       )}
-      <Button type="submit" loading={form.isLoading}>
+      <Button type="submit" loading={form.isLoading} incomplete={!form.isComplete}>
         Sign in
       </Button>
     </form>

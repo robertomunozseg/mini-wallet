@@ -1,118 +1,75 @@
-# Design decisions
+# Decisiones de diseño
 
-Each section says **what the code does** and leaves room for **why I chose it**. The "My reasoning" lines are for the author to complete.
+## 1. Estructura
 
-## 1. Project structure
+Separé el código por responsabilidad, no por tipo de archivo.
+Los datos van en una sola dirección: `domain → server/services → app/api → hooks → componentes`.
 
-The code is split by responsibility, not by file type:
+- `domain`: reglas de negocio, tipos y esquemas. TypeScript puro, sin React ni Next.
+- `server`: datos simulados, sesión, escenarios y servicios.
+- `app/api`: rutas delgadas que validan, llaman a un servicio y responden.
+- `features`: una carpeta por pantalla, con sus componentes y hooks.
+- `components/ui`: piezas visuales sin lógica.
 
-```
-domain → server/services → app/api → features (hooks) → components
-```
+Los componentes pintan, los hooks manejan estado y peticiones, y las reglas viven en el dominio.
+Me preocupó tener muchos archivos pequeños, pero cada uno cambia por una sola razón y es fácil saber dónde tocar.
 
-- `src/domain`: types, business rules and Zod schemas. Pure TypeScript.
-- `src/server`: mock database, session, scenarios and services. Only used by route handlers and Server Components.
-- `src/app/api`: thin route handlers.
-- `src/features/*`: one folder per feature (auth, home, transfer) with its components and hooks.
-- `src/components/ui`: presentational components with no business logic.
+## 2. Renderizado y API Routes
 
-> My reasoning: _why this layout, what I considered instead (for example grouping by file type), what a new developer finds easier._
+- `/home` y `/transfer` leen sus datos en el servidor, así la primera pantalla sale sin esperas extra.
+- `/login` es estático con un formulario de cliente, y el recibo es dinámico.
+- Las mutaciones pasan por route handlers, porque el reto pide API Routes y así es fácil probarlas y forzar escenarios con un header.
+- No usé Server Actions. Las consideraría para formularios que deban funcionar sin JavaScript.
 
-## 2. Separating UI from business logic
+## 3. Estado y datos
 
-- Components render and call hooks. They do not decide business rules.
-- Hooks (`useLogin`, `useConfirmTransfer`, `useAmountStep`, ...) own the state and the requests, and use the domain.
-- The domain has no React or Next imports, so its rules are tested without a browser.
+- Redux Toolkit guarda solo lo que cruza pantallas: el usuario y el borrador de la transferencia.
+- axios-hooks da un hook por petición, con carga y error, y la caché apagada para no mostrar saldos viejos.
 
-> My reasoning: _what this made easier to test and to change, and where I was tempted to put logic in a component._
+## 4. Reglas de negocio y permisos
 
-## 3. Rendering strategy per page
+Las tres reglas son una sola función pura, `validateTransfer`.
+El cliente la usa para avisar al instante, y el servidor la repite y es la fuente de verdad.
+El dinero va en centavos enteros para evitar errores de decimales.
 
-| Page                     | Strategy                                                                                                                                                    |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/login`                 | Static shell, client form                                                                                                                                   |
-| `/home`                  | Server Component: balance and the first page of movements are rendered on the server (movements stream in through `Suspense`); more pages load from the API |
-| `/transfer`              | Server Component reads the balance and renders a client flow                                                                                                |
-| `/transfer/receipt/[id]` | Dynamic Server Component; `notFound()` when the receipt does not exist                                                                                      |
+`proxy.ts` es la primera barrera, pero un redirect se puede esquivar.
+Por eso el servidor comprueba la sesión en cada ruta de la API y en las páginas protegidas.
 
-Server Components call the services directly instead of fetching their own API.
+## 5. Errores e idempotencia
 
-> My reasoning: _what each choice saves (an extra round trip, a loading flash) and what it costs._
+- Todos los errores de la API tienen la forma `{ error: { code, message } }`, y `mapApiError` convierte cualquier fallo en uno de esos códigos.
+- Cada confirmación elige un escenario al azar, o se fuerza con el header `x-mock-scenario`.
+- Cada transferencia lleva una `Idempotency-Key` que se conserva al reintentar, para que nunca se cobre dos veces.
+- Solo se guardan los resultados definitivos, así que un fallo de red o un timeout se pueden reintentar.
 
-## 4. Why Redux Toolkit and axios-hooks
+## 6. Casos límite
 
-- **Redux Toolkit** holds only app state that crosses screens: the signed-in user and the transfer draft (step, amount, recipient, idempotency key). The store is created per request, not as a global singleton.
-- **axios-hooks** gives one configured client and a hook per request with loading and error state. Mutations are manual; the cache is off so balances are never stale.
+- Monto cero, negativo, igual al saldo y saldo más un centavo.
+- Doble clic al confirmar y petición lenta (aviso a los 3 segundos).
+- Un timeout avisa que la transferencia pudo procesarse, y reintentar es seguro.
+- Contactos duplicados, búsqueda sin acentos y listas que cambian mientras se paginan.
+- Recargar un recibo, o abrir uno que no existe.
 
-> My reasoning: _why not local state only, why not RTK Query or React Query (see section 10)._
+## 7. Escala sin pasarme
 
-## 5. Where the business rules live
+El reto pide "millones de usuarios" y a la vez "sin sobre-ingeniería".
+Añadí solo lo que cambia con mucho volumen: paginación por cursor, búsqueda en el servidor, lista virtualizada y un almacén de idempotencia con límite.
+Me detuve ahí: sin base de datos ni capa de caché.
 
-The transfer rules (amount above zero, amount not above the balance, recipient required) are one pure function, `validateTransfer`, in the domain.
+## 8. Pruebas
 
-- The **client** runs it for immediate feedback.
-- The **server** runs it again and is the source of truth: it never trusts the client.
-- Money is an integer number of cents with its own branded type, and is formatted only when shown.
+- Pruebas unitarias del dominio, los servicios, los hooks y los componentes críticos.
+- Pruebas e2e con Playwright de cada flujo y de cada escenario de fallo.
+- Elegí Playwright (Cypress también servía) porque espera solo a los elementos, levanta la app y fuerza fallos con `page.route`.
+- Lo débil: solo corre en Chromium y las pruebas comparten los datos en memoria del servidor.
 
-> My reasoning: _why the same rule runs in two places, and why cents._
+## 9. Accesibilidad y diseño responsivo
 
-## 6. Errors and scenarios
+- Etiquetas en los campos, errores con `role="alert"`, teclado completo y un enlace para saltar al contenido.
+- Los botones de un formulario incompleto se ven grises pero siguen mostrando qué falta al pulsarlos.
+- Una revisión con axe corre en cada pantalla dentro de los e2e.
+- La lista se desplaza por dentro y la página no, incluso en una laptop con escala del 150 %.
 
-- Every API error has the same shape: `{ error: { code, message } }`, with a closed list of codes.
-- `mapApiError` turns any failure (HTTP error, timeout, no response) into one of those codes with a user-facing message.
-- A transfer picks a scenario (success, network error, insufficient funds, timeout, unknown) at random, or the `x-mock-scenario` header forces it. Each one has its own screen and its own actions (retry, change amount, back to home).
+## 10. Con más tiempo
 
-> My reasoning: _why a uniform contract, why random scenarios with a way to force them._
-
-## 7. Idempotency
-
-- The client creates an `Idempotency-Key` when the user confirms and keeps it while the transfer is retried.
-- The server stores definitive outcomes (success, insufficient funds) by key and returns the stored result on a retry, so a transfer is never debited twice.
-- Transient failures (network error, timeout, unknown error) are not stored, so the retry can still succeed.
-- Changing the amount or the recipient is a new intent, so the key is discarded.
-- The store has a 24 h expiry and a maximum size.
-
-> My reasoning: _what problem this prevents (a double tap, a retry after a timeout) and why failures are handled differently._
-
-## 8. Edge cases considered
-
-- Amounts: zero, negative, equal to the balance (allowed), balance plus one cent, decimals and thousands separators.
-- Double submit: blocked while a request is in flight.
-- Slow request: a "taking longer than usual" message after 3 seconds.
-- Timeout: the message says the transfer may have been processed, and retrying is safe.
-- Duplicate contacts and search ignoring accents ("garcia" finds "García").
-- A list changing while the user pages through it (cursor pagination does not repeat or skip items).
-- Leaving the transfer flow clears the draft; Back keeps it.
-- Reloading a receipt, and opening a receipt that does not exist.
-
-> My reasoning: _which of these surprised me while building, and which I would test first._
-
-## 9. Built for scale (even with a mock)
-
-- Cursor pagination, server-side search with debounce and request cancellation.
-- Virtualized movements list; `memo`, `useCallback` and `useMemo` where they avoid real re-renders.
-- `Cache-Control: private, no-store` on the API, and a bounded idempotency store.
-
-> My reasoning: _why I prepared for millions of users in a mock, and what I measured._
-
-## 10. Accessibility
-
-- Every field has a label; errors use `role="alert"`; icons that only decorate are hidden from screen readers.
-- Every interactive element has a visible focus style, and the whole flow works with the keyboard. A **Skip to content** link is the first Tab stop.
-- Each page has its own title (`Home | Mini Wallet`, `New transfer | Mini Wallet`, ...).
-- Colors are chosen for contrast on white.
-- An automatic check (axe, WCAG 2.1 A and AA) runs on every screen in the end-to-end tests, so a regression fails the build.
-
-> My reasoning: _why I treated accessibility as part of the definition of done, and what the automatic check cannot cover (for example, how it sounds with a screen reader)._
-
-## 11. What I would do differently with more time
-
-- **Real database** instead of in-memory state, with transactions for the debit.
-- **Real authentication** (sessions or tokens per user, password or provider login).
-- **Observability**: structured logs, metrics and error tracking, with a request id.
-- **i18n**: move the interface text out of the components.
-- **RTK Query or React Query** for caching and request deduplication instead of axios-hooks.
-- **Rate limiting** on login and transfers.
-- **Feature flags** for the demo mode and the forced scenarios, instead of environment variables.
-
-> My reasoning: _which of these I would do first and why._
+Base de datos real, autenticación real, observabilidad, traducciones, React Query o RTK Query, límite de peticiones y feature flags.

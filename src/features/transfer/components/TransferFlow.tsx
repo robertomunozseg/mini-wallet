@@ -43,20 +43,22 @@ export function TransferFlow({ balanceCents, scenario }: TransferFlowProps) {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const step = useAppSelector(selectTransferStep);
-  const { state: confirmState, confirm, retry } = useConfirmTransfer();
+  const { state: confirmState, confirm, retry, reset: resetConfirm } = useConfirmTransfer();
   // Going back while the request is in flight would hide a transfer that is still being made.
   const isSending = confirmState.status === "processing" || confirmState.status === "success";
   const [flowId, setFlowId] = useState(0);
 
   // Leaving the flow (Back from the first step, another link, browser back) clears the draft.
   // With Cache Components Next keeps the hidden page alive with its local state (typed text,
-  // open forms), so changing the key also remounts the steps and they start from scratch.
+  // open forms, the result of the last transfer), so the confirmation state is reset too and
+  // changing the key remounts the steps: the next transfer starts from scratch, with Back enabled.
   useEffect(() => {
     return () => {
       dispatch(reset());
+      resetConfirm();
       setFlowId((id) => id + 1);
     };
-  }, [dispatch]);
+  }, [dispatch, resetConfirm]);
 
   function handleBack() {
     const previous = PREVIOUS_STEP[step];
@@ -68,7 +70,10 @@ export function TransferFlow({ balanceCents, scenario }: TransferFlowProps) {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-xl flex-col gap-6">
+    // The flow is as tall as what is left of the window (see --wallet-chrome in globals.css), so a
+    // long contact list scrolls inside itself instead of making the page scroll. Below 30rem there
+    // is not enough room for the steps, so the page scrolls then.
+    <div className="mx-auto flex h-[calc(100dvh-var(--wallet-chrome))] max-h-[50rem] min-h-[30rem] w-full max-w-xl flex-col gap-6 short:gap-3">
       <div>
         <Button variant="ghost" onClick={handleBack} disabled={isSending} className="-ml-4">
           ← Back
@@ -77,7 +82,7 @@ export function TransferFlow({ balanceCents, scenario }: TransferFlowProps) {
 
       <StepIndicator steps={STEP_LABELS} currentIndex={INDICATOR_INDEX[step]} />
 
-      <div key={flowId}>
+      <div key={flowId} className="flex min-h-0 flex-1 flex-col">
         {step === "amount" && <AmountStep balanceCents={balanceCents} />}
         {step === "recipient" && <RecipientStep balanceCents={balanceCents} scenario={scenario} />}
         {step === "summary" && <SummaryStep balanceCents={balanceCents} onConfirm={confirm} />}

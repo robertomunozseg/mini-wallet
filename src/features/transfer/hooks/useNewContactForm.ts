@@ -69,6 +69,7 @@ export function useNewContactForm({ onCreated }: UseNewContactFormOptions) {
     phoneOrEmail,
     isFavorite,
     fieldErrors,
+    isComplete: validation.success,
     isLoading: loading,
     apiError,
     onNameChange: (event: ChangeEvent<HTMLInputElement>) => setName(event.target.value),

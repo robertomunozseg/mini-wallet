@@ -242,6 +242,30 @@ describe("useConfirmTransfer", () => {
     });
   });
 
+  describe("reset", () => {
+    it("goes back to idle after a success, so a new transfer can start", async () => {
+      restore = installHttpAdapter((config) => jsonResponse(config, 201, { receipt }));
+      const { result } = setup();
+      await act(() => result.current.confirm());
+      expect(result.current.state).toEqual({ status: "success" });
+
+      act(() => result.current.reset());
+
+      expect(result.current.state).toEqual({ status: "idle" });
+    });
+
+    it("clears an error too", async () => {
+      restore = installHttpAdapter((config) => networkError(config));
+      const { result } = setup();
+      await act(() => result.current.confirm());
+      expect(result.current.state).toMatchObject({ status: "error" });
+
+      act(() => result.current.reset());
+
+      expect(result.current.state).toEqual({ status: "idle" });
+    });
+  });
+
   describe("double submit", () => {
     it("sends a single request when confirm is called twice before the answer", async () => {
       let release = () => {};
