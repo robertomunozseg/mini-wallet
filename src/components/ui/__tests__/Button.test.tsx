@@ -52,6 +52,45 @@ describe("Button", () => {
     expect(onClick).not.toHaveBeenCalled();
   });
 
+  describe("look of a button that cannot be used", () => {
+    it.each(["primary", "danger"] as const)(
+      "a disabled %s button is grey, not coloured",
+      (variant) => {
+        render(
+          <Button variant={variant} disabled>
+            Send
+          </Button>,
+        );
+        const button = screen.getByRole("button", { name: "Send" });
+        expect(button).toHaveClass("bg-zinc-200", "text-zinc-500");
+        expect(button).not.toHaveClass("bg-blue-600", "bg-red-600");
+      },
+    );
+
+    it("a disabled secondary button loses its hover colours", () => {
+      render(
+        <Button variant="secondary" disabled>
+          Send
+        </Button>,
+      );
+      expect(screen.getByRole("button", { name: "Send" })).not.toHaveClass("hover:bg-blue-50");
+    });
+
+    it("a loading button keeps its colour and only fades", () => {
+      render(<Button loading>Send</Button>);
+      const button = screen.getByRole("button", { name: "Send" });
+      expect(button).toHaveClass("bg-blue-600", "opacity-60");
+      expect(button).not.toHaveClass("bg-zinc-200");
+    });
+
+    it("an enabled button keeps its colour and does not fade", () => {
+      render(<Button>Send</Button>);
+      const button = screen.getByRole("button", { name: "Send" });
+      expect(button).toHaveClass("bg-blue-600");
+      expect(button).not.toHaveClass("opacity-60");
+    });
+  });
+
   it.each(["primary", "secondary", "danger", "ghost"] as const)(
     "renders the %s variant",
     (variant) => {
