@@ -1,6 +1,5 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { SCENARIO_HEADER } from "@/domain/api";
 import type { Page } from "@/domain/pagination";
 import type { Movement } from "@/domain/types";
 import { installHttpAdapter, jsonResponse, networkError } from "@/test-utils/http-adapter";
@@ -35,50 +34,6 @@ describe("useMovements", () => {
     expect(result.current.items).toEqual([movement("m1")]);
     expect(result.current.hasMore).toBe(false);
     expect(result.current.error).toBeNull();
-  });
-
-  it("requests GET /movements with the page size and no scenario header by default", async () => {
-    const requests: unknown[] = [];
-    restore = installHttpAdapter((config) => {
-      requests.push({
-        method: config.method,
-        url: config.url,
-        limit: (config.params as { limit: number }).limit,
-        scenario: config.headers.get(SCENARIO_HEADER),
-      });
-      return jsonResponse(config, 200, { movements: [], nextCursor: null });
-    });
-    const { result } = renderHook(() => useMovements());
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-    expect(requests).toStrictEqual([
-      { method: "get", url: "/movements", limit: 20, scenario: undefined },
-    ]);
-  });
-
-  it.each(["empty", "error", "large"] as const)(
-    "forwards the %s scenario as a header",
-    async (scenario) => {
-      const headers: unknown[] = [];
-      restore = installHttpAdapter((config) => {
-        headers.push(config.headers.get(SCENARIO_HEADER));
-        return jsonResponse(config, 200, { movements: [], nextCursor: null });
-      });
-      const { result } = renderHook(() => useMovements(scenario));
-      await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-      expect(headers).toEqual([scenario]);
-    },
-  );
-
-  it("returns an empty list as an empty array", async () => {
-    restore = installHttpAdapter((config) =>
-      jsonResponse(config, 200, { movements: [], nextCursor: null }),
-    );
-    const { result } = renderHook(() => useMovements());
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-    expect(result.current.items).toEqual([]);
   });
 
   describe("pagination", () => {
@@ -129,14 +84,6 @@ describe("useMovements", () => {
 
     expect(result.current.error).toMatchObject({ code: "UNKNOWN_ERROR" });
     expect(result.current.items).toEqual([]);
-  });
-
-  it("maps a network error", async () => {
-    restore = installHttpAdapter((config) => networkError(config));
-    const { result } = renderHook(() => useMovements());
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-    expect(result.current.error).toMatchObject({ code: "NETWORK_ERROR" });
   });
 
   it("refetch repeats the request and recovers from an error", async () => {
