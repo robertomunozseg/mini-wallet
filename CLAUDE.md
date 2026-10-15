@@ -1,7 +1,7 @@
-# CLAUDE.md — Mini Wallet (Spin Web Challenge)
+# CLAUDE.md — Mini Wallet (Technical Challenge)
 
 ## Contexto
-Challenge técnico de Spin: web app en **Next.js (App Router) + TypeScript** que simula una wallet financiera:
+Challenge técnico: web app en **Next.js (App Router) + TypeScript** que simula una wallet financiera:
 **Login → Home → Nueva transacción → Confirmación/Comprobante**. Datos mockeados mediante API Routes.
 El sistema se evalúa como si operara con millones de usuarios: escalabilidad, mantenibilidad, tipado y manejo de errores.
 El autor será entrevistado sobre este código y modificará partes en vivo: **prioriza código simple y explicable sobre código ingenioso.**
