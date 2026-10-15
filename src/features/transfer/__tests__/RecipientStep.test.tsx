@@ -334,6 +334,18 @@ describe("RecipientStep", () => {
     });
   });
 
+  describe("Continue button look", () => {
+    it("is grey until a recipient is chosen, then blue", async () => {
+      renderStep();
+      const next = screen.getByRole("button", { name: "Continue" });
+      expect(next).toHaveAttribute("aria-disabled", "true");
+
+      await userEvent.click(screen.getByRole("radio", { name: /Ana García/ }));
+      expect(next).not.toHaveAttribute("aria-disabled");
+      expect(next).toHaveClass("bg-blue-600");
+    });
+  });
+
   describe("Continue", () => {
     it("asks for a recipient when none is selected", async () => {
       const { store } = renderStep();
@@ -437,6 +449,17 @@ describe("RecipientStep", () => {
       await userEvent.click(plus);
       expect(screen.queryByRole("heading", { name: "New contact" })).not.toBeInTheDocument();
       expect(plus).toHaveAttribute("aria-expanded", "false");
+    });
+
+    it("Save contact is grey until the form is valid, then blue", async () => {
+      renderStep();
+      await openForm();
+      const save = screen.getByRole("button", { name: "Save contact" });
+      expect(save).toHaveAttribute("aria-disabled", "true");
+
+      await fillForm("Pat Doe", "pat@example.com");
+      expect(save).not.toHaveAttribute("aria-disabled");
+      expect(save).toHaveClass("bg-blue-600");
     });
 
     it("opens and closes the form", async () => {

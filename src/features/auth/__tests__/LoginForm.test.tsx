@@ -25,6 +25,36 @@ describe("LoginForm", () => {
     mockLogin({});
   });
 
+  describe("Sign in button", () => {
+    function signIn() {
+      return screen.getByRole("button", { name: "Sign in" });
+    }
+
+    it("is grey (aria-disabled) while the field is empty or invalid", async () => {
+      render(<LoginForm />);
+      expect(signIn()).toHaveAttribute("aria-disabled", "true");
+
+      await userEvent.type(field(), "not-valid");
+      expect(signIn()).toHaveAttribute("aria-disabled", "true");
+    });
+
+    it("still explains what is wrong when it is pressed", async () => {
+      render(<LoginForm />);
+      await userEvent.click(signIn());
+
+      expect(screen.getByRole("alert")).toHaveTextContent("This field is required");
+      expect(login).not.toHaveBeenCalled();
+    });
+
+    it("turns blue when the field is valid", async () => {
+      render(<LoginForm />);
+      await userEvent.type(field(), "someone@example.com");
+
+      expect(signIn()).not.toHaveAttribute("aria-disabled");
+      expect(signIn()).toHaveClass("bg-blue-600");
+    });
+  });
+
   describe("validation", () => {
     it("shows no error before the user interacts", () => {
       render(<LoginForm />);

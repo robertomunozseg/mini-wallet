@@ -166,7 +166,9 @@ export function RecipientStep({ balanceCents, scenario }: RecipientStepProps) {
           </p>
         )}
 
-        <Button onClick={handleContinue}>Continue</Button>
+        <Button onClick={handleContinue} incomplete={recipientMissing}>
+          Continue
+        </Button>
       </div>
     </div>
   );

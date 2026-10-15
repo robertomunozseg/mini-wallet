@@ -44,7 +44,7 @@ export async function retryUntilHydrated(interaction: () => Promise<void>) {
 export async function enterAmount(page: Page, amount: string) {
   await retryUntilHydrated(async () => {
     await page.getByLabel("Amount (MXN)").fill(amount);
-    await page.getByRole("button", { name: "Continue" }).click();
+    await page.getByRole("button", { name: "Continue" }).click({ timeout: 2_000 });
     await expect(page.getByRole("heading", { name: "Who is receiving it?" })).toBeVisible({
       timeout: 2_000,
     });

@@ -30,6 +30,39 @@ describe("AmountStep", () => {
     expect(field()).not.toHaveAttribute("aria-invalid");
   });
 
+  describe("Continue button", () => {
+    function next() {
+      return screen.getByRole("button", { name: "Continue" });
+    }
+
+    it("is grey while the amount is empty, zero or above the balance", async () => {
+      renderWithStore(<AmountStep balanceCents={balanceCents} />);
+      expect(next()).toHaveAttribute("aria-disabled", "true");
+
+      await userEvent.type(field(), "0");
+      expect(next()).toHaveAttribute("aria-disabled", "true");
+
+      await userEvent.clear(field());
+      await userEvent.type(field(), "1000.01");
+      expect(next()).toHaveAttribute("aria-disabled", "true");
+    });
+
+    it("still shows the error when it is pressed", async () => {
+      renderWithStore(<AmountStep balanceCents={balanceCents} />);
+      await userEvent.click(next());
+
+      expect(screen.getByRole("alert")).toHaveTextContent("Enter an amount.");
+    });
+
+    it("turns blue with a valid amount", async () => {
+      renderWithStore(<AmountStep balanceCents={balanceCents} />);
+      await userEvent.type(field(), "50");
+
+      expect(next()).not.toHaveAttribute("aria-disabled");
+      expect(next()).toHaveClass("bg-blue-600");
+    });
+  });
+
   describe("rules", () => {
     it("requires an amount", async () => {
       renderWithStore(<AmountStep balanceCents={balanceCents} />);

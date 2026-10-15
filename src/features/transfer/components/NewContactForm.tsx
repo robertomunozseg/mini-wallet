@@ -53,7 +53,7 @@ export function NewContactForm({ onCreated, onCancel }: NewContactFormProps) {
           </div>
         )}
         <div className="flex flex-col gap-2 sm:flex-row">
-          <Button type="submit" loading={form.isLoading}>
+          <Button type="submit" loading={form.isLoading} incomplete={!form.isComplete}>
             Save contact
           </Button>
           <Button variant="secondary" onClick={onCancel} disabled={form.isLoading}>

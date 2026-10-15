@@ -47,6 +47,7 @@ export function useAmountStep(balanceCents: Cents) {
 
   return {
     text,
+    isComplete: amountError === undefined,
     error: touched && amountError ? TRANSFER_ERROR_MESSAGES[amountError] : undefined,
     onChange,
     onBlur: () => setTouched(true),

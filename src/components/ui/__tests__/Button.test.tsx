@@ -91,6 +91,45 @@ describe("Button", () => {
     });
   });
 
+  describe("incomplete (the form is not valid yet)", () => {
+    it("looks grey and is announced as unavailable", () => {
+      render(<Button incomplete>Send</Button>);
+      const button = screen.getByRole("button", { name: "Send" });
+      expect(button).toHaveAttribute("aria-disabled", "true");
+      expect(button).toHaveClass("bg-zinc-200", "text-zinc-500");
+      expect(button).not.toHaveClass("bg-blue-600");
+    });
+
+    it("can still be pressed, so the user gets the messages that explain what is missing", async () => {
+      const onClick = vi.fn();
+      render(
+        <Button incomplete onClick={onClick}>
+          Send
+        </Button>,
+      );
+      await userEvent.click(screen.getByRole("button", { name: "Send" }));
+      expect(onClick).toHaveBeenCalledTimes(1);
+    });
+
+    it("is a normal button when it is not incomplete", () => {
+      render(<Button incomplete={false}>Send</Button>);
+      const button = screen.getByRole("button", { name: "Send" });
+      expect(button).not.toHaveAttribute("aria-disabled");
+      expect(button).toHaveClass("bg-blue-600");
+    });
+
+    it("a really disabled button is not also marked aria-disabled", () => {
+      render(
+        <Button incomplete disabled>
+          Send
+        </Button>,
+      );
+      const button = screen.getByRole("button", { name: "Send" });
+      expect(button).toBeDisabled();
+      expect(button).not.toHaveAttribute("aria-disabled");
+    });
+  });
+
   it.each(["primary", "secondary", "danger", "ghost"] as const)(
     "renders the %s variant",
     (variant) => {
